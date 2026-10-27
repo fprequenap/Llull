@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Código de Llull</title>
+<meta name="description" content="El Libro de la Orden de Caballería de Ramon Llull como código diario del caballero: pruebas, grados, blasón e investidura.">
+<meta name="theme-color" content="#9E1F17">
+<link rel="manifest" href="llull.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Código de Llull">
+<style>
+@font-face{font-family:'UnifrakturMaguntia';src:url(unifraktur.woff2) format('woff2');font-display:swap}
+@font-face{font-family:'EB Garamond';src:url(garamond-400.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'EB Garamond';src:url(garamond-400i.woff2) format('woff2');font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:'EB Garamond';src:url(garamond-600.woff2) format('woff2');font-weight:600;font-display:swap}
+:root{
+  --perg:#F6F0E1; --perg2:#FBF7EE; --perg3:#EFE5CE; --tinta:#2A211B; --gris:#6B5E4B; --linea:#D9CCB0;
+  --rojo:#9E1F17; --rojo2:#C0392B; --oro:#A8801C; --verde:#2F6B37; --negro:#1B1A1A;
+  --fs:19px; --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--perg);color:var(--tinta)}
+body{font-family:'EB Garamond',Georgia,'Times New Roman',serif;font-size:var(--fs);line-height:1.45;-webkit-text-size-adjust:100%;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+h1,h2,h3{font-weight:600;margin:.2em 0 .4em;line-height:1.2}
+h1{font-family:'UnifrakturMaguntia',serif;font-weight:400;color:var(--rojo);font-size:1.9em;letter-spacing:.5px}
+h2{font-size:1.25em;color:var(--rojo)}
+h3{font-size:1.05em}
+.got{font-family:'UnifrakturMaguntia',serif;font-weight:400}
+.rub{color:var(--rojo)}
+.peq{font-size:.82em;color:var(--gris)}
+.cen{text-align:center}
+button,input,select,textarea{font:inherit;color:inherit}
+button,[data-a]{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:rgba(158,31,23,.15)}
+nav.tabs button svg,nav.tabs button span{pointer-events:none}
+a{color:var(--rojo)}
+header.top{position:sticky;top:0;z-index:20;background:var(--perg);border-bottom:2px solid var(--rojo);padding:calc(8px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px}
+header.top .t{flex:1;min-width:0}
+header.top .t b{display:block;font-family:'UnifrakturMaguntia',serif;font-weight:400;color:var(--rojo);font-size:1.35em;line-height:1}
+header.top .t span{font-size:.8em;color:var(--gris);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+header.top .miniescudo{width:38px;height:50px;flex:none}
+main{max-width:760px;margin:0 auto;padding:14px 16px 24px}
+.card{background:var(--perg2);border:1px solid var(--linea);border-radius:var(--r);padding:14px 16px;margin:0 0 14px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+.card.roja{border-left:4px solid var(--rojo)}
+.card.oro{border-left:4px solid var(--oro)}
+.card.negra{border-left:4px solid var(--negro);background:#F1ECE4}
+.banda{display:block;width:100%;max-width:520px;margin:6px auto 12px;height:auto;opacity:.95}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1.5px solid var(--rojo);background:var(--rojo);color:#fff;border-radius:8px;padding:9px 16px;min-height:44px;font-weight:600}
+.btn.sec{background:transparent;color:var(--rojo)}
+.btn.osc{background:var(--negro);border-color:var(--negro)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ancho{width:100%}
+.fila{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.chip{border:1.5px solid var(--linea);background:var(--perg2);border-radius:20px;padding:6px 12px;min-height:38px;font-size:.92em}
+.chip.on{border-color:var(--rojo);background:var(--rojo);color:#fff}
+.divisa{font-size:1.28em;line-height:1.38;margin:.2em 0 .5em}
+.divisa::first-letter{color:var(--rojo);font-size:2.4em;font-weight:600;float:left;line-height:.85;padding:5px 6px 0 0}
+.ref{font-size:.82em;color:var(--rojo);letter-spacing:.3px}
+.prueba{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px dashed var(--linea)}
+.prueba:first-child{border-top:0}
+.prueba .txt{flex:1}
+.prueba .txt b{display:block}
+.tri{display:flex;gap:4px;flex:none}
+.tri button{width:44px;height:44px;border-radius:8px;border:1.5px solid var(--linea);background:var(--perg2);font-size:1.1em}
+.tri button.si.on{background:var(--verde);border-color:var(--verde);color:#fff}
+.tri button.no.on{background:var(--rojo);border-color:var(--rojo);color:#fff}
+.tag{display:inline-block;font-size:.72em;text-transform:uppercase;letter-spacing:.6px;border:1px solid currentColor;border-radius:4px;padding:0 5px;margin-right:4px;color:var(--gris)}
+.tag.v{color:var(--oro)}
+.barra{height:10px;background:var(--perg3);border-radius:6px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--rojo)}
+.matriz{display:grid;grid-template-columns:110px 1fr 54px;gap:6px 10px;align-items:center;font-size:.92em}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--perg2);border-top:2px solid var(--rojo);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;border:0;background:none;padding:8px 0 6px;min-height:58px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.78em;color:var(--gris)}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button.on{color:var(--rojo);font-weight:600}
+label.campo{display:block;margin:10px 0}
+label.fila{flex-wrap:nowrap}
+label.fila input{flex:none}
+label.campo span{display:block;font-size:.85em;color:var(--gris);margin-bottom:3px}
+input[type=text],input[type=date],input[type=number],input[type=time],select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--linea);border-radius:8px;background:#fff;min-height:44px}
+textarea{min-height:80px}
+.lector{font-size:var(--fs)}
+.lector .par{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:10px 0;border-bottom:1px solid var(--perg3)}
+.lector.es .par,.lector.lem .par{grid-template-columns:1fr}
+.lector.es .lem,.lector.lem .es{display:none}
+.lector .lem{font-family:'UnifrakturMaguntia',serif;font-size:.95em;line-height:1.5;color:#3a2f27}
+.lector .num{color:var(--rojo);font-weight:600;margin-right:4px}
+.lector .es{text-align:justify;hyphens:auto}
+.lector img.cap{float:left;width:72px;height:72px;margin:4px 8px 0 0}
+.lector .tit{text-align:center;color:var(--rojo);font-size:1.15em;margin:6px 0 2px}
+.lector .titlem{text-align:center;font-family:'UnifrakturMaguntia',serif;color:var(--rojo);font-size:1.1em}
+.lista a{display:block;padding:12px 4px;border-bottom:1px solid var(--linea);text-decoration:none;color:var(--tinta)}
+.lista a b{color:var(--rojo)}
+.marca{background:#F5D77A}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(40,30,20,.45);display:flex;align-items:flex-end;justify-content:center}
+.modal .hoja{background:var(--perg);width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.splash{position:fixed;inset:0;z-index:60;background:var(--perg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;transition:opacity .6s}
+.splash svg{width:min(78vw,380px);height:auto}
+.splash .nom{font-size:1.3em;font-weight:600;margin-top:4px}
+.splash .gr{font-family:'UnifrakturMaguntia',serif;color:var(--rojo);font-size:1.5em}
+.logro svg{width:100%;max-width:360px;display:block;margin:0 auto}
+.aviso{background:#FFF3D6;border:1px solid #E5C77A;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.92em}
+.ensayo{background:#1E4C9A;color:#fff;text-align:center;font-size:.8em;padding:3px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--negro);color:#fff;padding:10px 16px;border-radius:8px;z-index:70;max-width:90vw;text-align:center}
+table.tab{width:100%;border-collapse:collapse;font-size:.9em}
+table.tab td,table.tab th{border-bottom:1px solid var(--linea);padding:6px 4px;text-align:left;vertical-align:top}
+.sacudir{animation:sac .5s}
+@keyframes sac{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(6px)}}
+.espada-anim{animation:cenir 1.2s ease-out}
+@keyframes cenir{from{transform:translateY(-80px) rotate(-30deg);opacity:0}to{transform:none;opacity:1}}
+.constructor .prev{position:sticky;top:64px;z-index:5;background:var(--perg);padding-bottom:6px}
+.constructor .prev svg{max-width:150px}
+.constructor .prev{border-bottom:1px solid var(--linea)}
+.sw{display:inline-block;width:22px;height:22px;border-radius:50%;border:1.5px solid #555;vertical-align:middle}
+@media (max-width:560px){ .lector .par{grid-template-columns:1fr;gap:6px} .matriz{grid-template-columns:90px 1fr 48px} }
+@media print{nav.tabs,header.top{display:none}}
+</style>
+</head>
+<body>
+<div id="ensayo"></div>
+<header class="top" id="cab"></header>
+<main id="app"></main>
+<nav class="tabs" id="tabs"></nav>
+<script src="data.js"></script>
+<script src="contenido.js"></script>
+<script src="fisico.js"></script>
+<script src="blason.js"></script>
+<script src="motor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
