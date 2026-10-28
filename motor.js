@@ -41,7 +41,9 @@ function estadoNuevo(){
     balanzas:{},                 // id → posición del fiel (−100 defecto … +100 exceso)
     rojos:0,                     // veces que una balanza ha llegado al rojo desde el último cambio de grado
     rojosHist:[],
-    cartaInicial:null            // fecha de la carta de conducta (examen o carta informativa)
+    cartaInicial:null,           // fecha de la carta de conducta (examen o carta informativa)
+    rojoNoches:{},               // noches seguidas en rojo por balanza (cuenta otra vez cada 7)
+    serie:[]                     // evolución diaria: {f, c, b}
   };
 }
 let S = null;
@@ -50,6 +52,8 @@ function cargar(){
   catch(e){ S = estadoNuevo(); }
   const base = estadoNuevo();
   for (const k in base) if (S[k] === undefined) S[k] = base[k];
+  // migración aditiva: la evolución arranca con las mediciones ya hechas (no se borra nada)
+  if (!S.serie.length && (S.mediciones||[]).length) S.serie = S.mediciones.map(m => ({ f:m.fecha, c:cercania(m.bal), b:{ ...m.bal }, m:1 }));
   return S;
 }
 function guardar(){ try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch(e){} }
@@ -216,6 +220,10 @@ function cerrarDia(fecha, respuestas, faltaGrave, balRes){
     if (S.situacion === 'escudero') S.escuderia.dias++;
     if (S.situacion === 'expulsado' && S.penitencia) S.penitencia.dias++;
   }
+  // la balanza que sigue en rojo cuenta otra vez cada 7 noches seguidas
+  if (!degr) degr = rojoPersistente();
+  // evolución: una instantánea por noche
+  apuntarSerie(fecha);
   if (degr) { res.eventos.push(degr); guardar(); return res; }
   // caída
   if (fallosRecientes() > tolerancia() && ['orden','escudero','aspirante'].includes(S.situacion)) {
@@ -280,7 +288,7 @@ function comprobarAscenso(){
   const R = requisitosAscenso();
   if (!R || !R.completo) return null;
   S.grado = R.sig; resetProg(); S.honra += 1000;
-  anotar(`Asciende al grado de ${nombreGrado()}.`, 'honor');
+  anotar(`Asciende al grado de ${nombreGrado()}${S.perfil && S.perfil.padrino ? `, ante su padrino ${S.perfil.padrino}` : ''}.`, 'honor');
   return 'asciende';
 }
 
@@ -403,7 +411,7 @@ function moverBalanza(id, delta){
   const antes = S.balanzas[id] || 0;
   const despues = Math.max(-100, Math.min(100, antes + delta));
   S.balanzas[id] = despues;
-  if (zona(despues) === 'peligro' && zona(antes) !== 'peligro') return registrarRojo(id, despues);
+  if (zona(despues) === 'peligro' && zona(antes) !== 'peligro') { S.rojoNoches[id] = 0; return registrarRojo(id, despues); }
   return null;
 }
 function registrarRojo(id, v){
@@ -458,6 +466,7 @@ function aplicarMedicion(carta){
     if (!primera && zona(v) === 'peligro' && zona(antes) !== 'peligro') { const e = registrarRojo(B.id, v); if (e) evento = e; }
   }
   S.mediciones.push({ fecha: hoyISO(), bal:{ ...nueva }, tipo: primera ? 'informativa' : 'mensual' });
+  apuntarSerie(hoyISO()); { const u = S.serie.find(x => x.f === hoyISO()); if (u) u.m = 1; }
   if (S.mediciones.length > 60) S.mediciones.shift();
   S.cartaInicial = S.cartaInicial || hoyISO();
   S.ultimaMedicion = hoyISO();
@@ -485,3 +494,32 @@ function puntosLucha(v){
   return { hastaMedio, hastaZona, objetivo, noches: Math.ceil(hastaZona / 8) };
 }
 function medicionAnterior(){ const M = S.mediciones || []; return M.length >= 2 ? M[M.length-2] : null; }
+
+
+/* ---------- el rojo que persiste: cuenta de nuevo cada 7 noches seguidas en rojo ---------- */
+const NOCHES_ROJO = 7;
+function rojoPersistente(){
+  let evento = null;
+  S.rojoNoches = S.rojoNoches || {};
+  for (const B of BALANZAS) {
+    if (zona(S.balanzas[B.id]) === 'peligro') {
+      S.rojoNoches[B.id] = (S.rojoNoches[B.id] || 0) + 1;
+      if (S.rojoNoches[B.id] >= NOCHES_ROJO) {
+        S.rojoNoches[B.id] = 0;
+        anotar(`${B.nombre}: siete noches seguidas en el rojo cuentan como una vez más.`, 'deshonor');
+        const e = registrarRojo(B.id, S.balanzas[B.id]); if (e) evento = e;
+      }
+    } else S.rojoNoches[B.id] = 0;
+  }
+  return evento;
+}
+
+/* ---------- evolución ---------- */
+function apuntarSerie(fecha){
+  S.serie = S.serie || [];
+  const p = { f: fecha, c: cercania(S.balanzas), b: { ...S.balanzas } };
+  const i = S.serie.findIndex(x => x.f === fecha);
+  if (i >= 0) S.serie[i] = { ...S.serie[i], ...p }; else S.serie.push(p);
+  S.serie.sort((a,b) => a.f < b.f ? -1 : 1);
+  if (S.serie.length > 800) S.serie.splice(0, S.serie.length - 800);
+}

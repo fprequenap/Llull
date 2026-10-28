@@ -149,12 +149,28 @@ En cada grado se exige, además, toda la tabla física de la edad.
 - **Cada noche**, el examen pregunta por la conducta del día en dos o tres balanzas: la más inclinada, la del ánimo de la mañana y una rotatoria. Las respuestas mueven el fiel.
 - **Cada día**, la balanza más inclinada recibe una prueba que empuja hacia el medio **desde su lado**: no se combate igual la ira que el consentimiento de la injusticia.
 - **El hábito no se borra con el perdón:** la confesión perdona la culpa, pero el fiel solo vuelve al medio con actos contrarios.
-- **Regla del rojo:** las balanzas son guía, salvo que el fiel llegue al rojo más de 3 veces. Entonces se pierde el empleo inmediato inferior; del escudero, la expulsión. El recuento vuelve a cero en cada cambio de grado.
+- **Regla del rojo:** las balanzas son guía, salvo que el fiel llegue al rojo más de 3 veces (quedarse en el rojo 7 noches seguidas cuenta como una vez más). Entonces se pierde el empleo inmediato inferior; del escudero, la expulsión. El recuento vuelve a cero en cada cambio de grado.
 - **Medición:** cada 30 días la app pide una medición de conducta (carta de frecuencias del último mes), y puede hacerse cuando se quiera. Coloca las balanzas donde uno está; si alguna entra en el rojo, cuenta. La primera carta de un miembro antiguo es solo informativa.
 - **Puntos de lucha:** cada balanza indica cuántos puntos faltan hasta la zona mejor y hasta el medio, y cuántas noches limpias supone (una noche sin falta acerca el fiel 8 puntos; la prueba del día superada, 6).
 - **Cercanía a la Orden:** 100 % menos la desviación media de las once balanzas; 100 % es tenerlas todas en el fiel. Se compara con la medición anterior.
 - **Escala graduada:** bajo cada balanza, una regla de 100 (defecto) a 100 (exceso) con las zonas marcadas y la posición del fiel; debajo, cómo combatir el lado hacia el que se inclina.
 - **No retroactividad:** quien ya estaba en la Orden conservó su grado; el recuento de rojos empezó en cero, y la carta de conducta que hacen los miembros antiguos es solo informativa.
+
+## Mi arnés
+
+«Tener aseado su arnés y herrar su caballo es oficio de caballero» (II, §31). En Hoy y en Armas aparece la figura del usuario:
+
+- **Escudero:** de pie, en perpunte (V, §17) y sin caballo; cada arma aprendida se le coloca sin brillo.
+- **Caballero:** armado y a caballo, con su blasón en el escudo y en la gualdrapa. Cada pieza refleja la balanza de la virtud que significa: reluciente (virtud), limpia (dominio), empañada (amenaza) o herrumbrosa (peligro). El caballo, por el ejercicio de los últimos siete días.
+- **Grados:** cimera (valvasor), pendón en la lanza (comdor), corona y manto (conde).
+- **Caída o expulsión:** de pie, con las armas abatidas.
+- Al tocar una pieza se abre su significación (Parte V), su balanza y cómo limpiarla.
+
+## Padrino, evolución y voz
+
+- **Padrino:** el caballero elige como padrino a uno de los mejores caballeros de la Historia, escribiendo él mismo el nombre (IV, §9). Le arma en la investidura, preside sus ascensos y cada noche le pregunta qué diría de su día.
+- **Evolución:** gráfico de la cercanía a la Orden y de cada balanza, noche a noche, con las mediciones mensuales marcadas.
+- **El Libro en voz alta:** la divisa, cualquier cita y cada Parte del Libro pueden escucharse con la voz del teléfono.
 
 ## El deseo
 
@@ -300,6 +316,7 @@ El blasón aparece al abrir la aplicación y en *Mis armas*, y puede compartirse
 | `contenido.js` | Virtudes, ánimos, circunstancias, pruebas, armas, oficios, preguntas, examen de ingreso y grados |
 | `fisico.js` | Tabla física, coeficientes, ejercicios, nutrición y calendario litúrgico |
 | `blason.js` | Heráldica: dibujo SVG, regla de esmaltes y blasonado |
+| `arnes.js` | Mi arnés: el escudero y el caballero armado, con el estado de cada pieza |
 | `data.js` | Texto íntegro del Libro y las 365 divisas |
 | `sw.js` | Service worker: funcionamiento sin conexión y actualización |
 | `llull.webmanifest` | Manifiesto de la PWA |
