@@ -4,7 +4,7 @@
 const CLAVE = 'codigoLlull.v1';
 const EDAD_MIN = 14, EDAD_ARMAR = 18, EDAD_CONDE = 60;
 const DIAS_ESCUDERIA = 365, VENTANA = 20, DIAS_ACIDIA = 30;
-const PENITENCIA = { falta:40, acidia:30, caida:0 };
+const PENITENCIA = { falta:40, acidia:30, rojo:30, caida:0 };
 
 /* ---------- utilidades de fecha ---------- */
 function hoyISO(d){ d = d || new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -37,7 +37,11 @@ function estadoNuevo(){
     ultimoExamenNoche:null,
     historial:[],
     ajustes:{ tam:19, columnas:'ambas', horaManana:'07:00', horaNoche:'22:00' },
-    ultimaCopia:null
+    ultimaCopia:null,
+    balanzas:{},                 // id → posición del fiel (−100 defecto … +100 exceso)
+    rojos:0,                     // veces que una balanza ha llegado al rojo desde el último cambio de grado
+    rojosHist:[],
+    cartaInicial:null            // fecha de la carta de conducta (examen o carta informativa)
   };
 }
 let S = null;
@@ -122,6 +126,12 @@ function generarDia(fecha, animo, circ){
   orden.push(...resto);
   const usadas = new Set(), pruebas = [];
   for (let i=0; i<n; i++) pruebas.push(pruebaMoral(orden[i], sem + i*31, usadas));
+  // la balanza más inclinada: una prueba que empuja hacia el medio desde su lado
+  const bp = balanzaMasInclinada();
+  if (bp) {
+    const B = bp.B, lado = bp.v > 0 ? 'exc' : 'def', L = B[lado].p;
+    pruebas.push({ tipo:'balanza', id:B.id, lado, v:B.virtud, t:`${B.nombre}: contra ${B[lado].n.toLowerCase()}`, d:L[sem % L.length], ref:B.ref, ok:null });
+  }
   // armas: el escudero aprende una cada 20 días; el caballero hacia Valvasor prueba las que le faltan
   if (S.situacion === 'escudero' || S.situacion === 'aspirante') {
     const ia = Math.min(ARMAS.length-1, Math.floor((S.escuderia.dias||0) / 20));
@@ -168,7 +178,7 @@ function multiplicador(d){
   for (const id of d.opcionales) { const o = OPCIONALES.find(x => x.id === id); if (o) m *= o.mult; }
   return Math.min(TOPE_MULT, m);
 }
-function cerrarDia(fecha, respuestas, faltaGrave){
+function cerrarDia(fecha, respuestas, faltaGrave, balRes){
   const d = S.dias[fecha]; if (!d || d.cerrado) return null;
   const res = { eventos:[] };
   d.examen = { respuestas, falta: faltaGrave || null };
@@ -189,6 +199,14 @@ function cerrarDia(fecha, respuestas, faltaGrave){
     if (p.tipo === 'moral') S.prog.virt[p.v] = (S.prog.virt[p.v]||0) + 1;
     if (p.tipo === 'arma') { if (S.situacion === 'orden') S.prog.armas[p.id] = true; else S.armasConocidas[p.id] = true; S.prog.virt[p.v] = (S.prog.virt[p.v]||0) + 1; }
     if (p.tipo === 'oficio') S.prog.oficios[p.id] = (S.prog.oficios[p.id]||0) + 1;
+    if (p.tipo === 'balanza') { S.prog.virt[p.v] = (S.prog.virt[p.v]||0) + 1; moverHaciaMedio(p.id, 6); }
+  }
+  // el examen nocturno de conducta mueve el fiel
+  let degr = null;
+  if (balRes) for (const [id, r] of Object.entries(balRes)) {
+    const d = (r.exc||0) - (r.def||0);
+    if (!r.exc && !r.def) moverHaciaMedio(id, 8);
+    else { const res2 = moverBalanza(id, d === 0 ? (r.exc||0) : d); if (res2) degr = res2; }
   }
   if (d.fisica && d.fisica.ok) { S.prog.fisico[d.fisica.id] = true; n++; }
   d.honra = Math.round(n * 10 * (d.superado ? multiplicador(d) : 1));
@@ -198,6 +216,7 @@ function cerrarDia(fecha, respuestas, faltaGrave){
     if (S.situacion === 'escudero') S.escuderia.dias++;
     if (S.situacion === 'expulsado' && S.penitencia) S.penitencia.dias++;
   }
+  if (degr) { res.eventos.push(degr); guardar(); return res; }
   // caída
   if (fallosRecientes() > tolerancia() && ['orden','escudero','aspirante'].includes(S.situacion)) {
     caer(); res.eventos.push('caida');
@@ -279,10 +298,14 @@ function evaluarIngreso(r){
   // paraje (III, §8) o, en su defecto, nobles obras (III, §10)
   total++;
   if (r.moral.paraje === true || r.moral.obras === true) puntos++; else { det.push('III, §§8–10: sin paraje ni nobles obras que lo suplan'); elim = true; }
-  // vicios del §20
-  total += VICIOS_P20.length;
-  puntos += VICIOS_P20.length - r.vicios.length;
-  if (r.vicios.length) det.push(`III, §20: ${r.vicios.join(', ')}`);
+  // III, §20 y Parte VI: las balanzas, por conducta y frecuencia
+  const bal = cartaABalanzas(r.bal || {});
+  for (const B of BALANZAS) {
+    total++;
+    const z = zona(bal[B.id]);
+    puntos += z === 'peligro' ? 0 : z === 'amenaza' ? 0.5 : 1;
+    if (z === 'peligro') { elim = true; det.push(`III, §20: ${B.nombre}, en peligro (${ladoNombre(B, bal[B.id])})`); }
+  }
   const nm = notaMinima(e >= EDAD_CONDE ? 4 : 0);
   const notaMoral = puntos / total;
   const notaQuiz = r.quiz.aciertos / r.quiz.total;
@@ -292,11 +315,12 @@ function evaluarIngreso(r){
   if (notaQuiz < nm) det.push(`IV, §§5–7: conocimientos ${Math.round(notaQuiz*100)} % (mínimo ${Math.round(nm*100)} %)`);
   if (notaMoral < nm) det.push(`Parte III: examen moral ${Math.round(notaMoral*100)} % (mínimo ${Math.round(nm*100)} %)`);
   const aprobado = !elim && fisOk && notaQuiz >= nm && notaMoral >= nm;
-  return { aprobado, notaMoral, notaQuiz, minima:nm, fis, det };
+  return { aprobado, notaMoral, notaQuiz, minima:nm, fis, det, bal };
 }
 function aplicarIngreso(res, tipo){
   const e = edad(), hoy = hoyISO();
   S.examenes.push({ fecha:hoy, tipo, aprobado:res.aprobado, notaMoral:res.notaMoral, notaQuiz:res.notaQuiz, det:res.det });
+  if (res.bal) { S.balanzas = { ...res.bal }; S.cartaInicial = hoy; }
   if (res.aprobado) {
     if (e < EDAD_ARMAR) {
       S.situacion = 'escudero'; S.escuderia = { dias:0, inicio:hoy };
@@ -349,4 +373,73 @@ function completarInvestidura(){
   anotar(`${fem()?'Armada':'Armado'} en la fiesta de ${S.investidura.nombre}: ${nombreGrado()}.`, 'honor');
   S.investidura.completada = hoyISO();
   guardar();
+}
+
+
+/* ---------- las balanzas ---------- */
+function zona(v){ const a = Math.abs(v||0); return ZONAS.find(z => a < z.hasta).id; }
+function zonaObj(v){ const a = Math.abs(v||0); return ZONAS.find(z => a < z.hasta); }
+function ladoNombre(B, v){ return (v||0) > 0 ? B.exc.n : (v||0) < 0 ? B.def.n : 'en el medio'; }
+/* carta de conducta → posiciones: el lado más frecuente manda; si empatan, pesa el exceso */
+function cartaABalanzas(carta){
+  const out = {};
+  for (const B of BALANZAS) {
+    const r = carta[B.id] || {}, e = r.exc || 0, d = r.def || 0;
+    out[B.id] = e >= d ? e : -d;
+  }
+  return out;
+}
+function balanzaMasInclinada(){
+  let mejor = null;
+  for (const B of BALANZAS) { const v = S.balanzas[B.id] || 0; if (Math.abs(v) >= 20 && (!mejor || Math.abs(v) > Math.abs(mejor.v))) mejor = { B, v }; }
+  return mejor;
+}
+function moverHaciaMedio(id, paso){
+  const v = S.balanzas[id] || 0;
+  S.balanzas[id] = Math.abs(v) <= paso ? 0 : v - Math.sign(v) * paso;
+}
+/* Mueve el fiel; si entra en el rojo, lo anota. Devuelve 'degradacion' | 'expulsion' | null */
+function moverBalanza(id, delta){
+  const antes = S.balanzas[id] || 0;
+  const despues = Math.max(-100, Math.min(100, antes + delta));
+  S.balanzas[id] = despues;
+  if (zona(despues) === 'peligro' && zona(antes) !== 'peligro') return registrarRojo(id, despues);
+  return null;
+}
+function registrarRojo(id, v){
+  if (!['orden','escudero','aspirante'].includes(S.situacion)) return null;
+  const B = BALANZAS.find(x => x.id === id);
+  S.rojos = (S.rojos||0) + 1;
+  S.rojosHist.unshift({ fecha: hoyISO(), id, lado: v > 0 ? 'exc' : 'def' });
+  anotar(`${B.nombre}: el fiel llega al rojo (${ladoNombre(B, v).toLowerCase()}). Van ${S.rojos} de ${ROJOS_MAX} tolerados.`, 'deshonor');
+  if (S.rojos > ROJOS_MAX) { S.rojos = 0; return degradarPorRojo(); }
+  return null;
+}
+/* Degradación al empleo inmediato inferior; del escudero, la expulsión */
+function degradarPorRojo(){
+  if (S.situacion === 'orden' && S.grado > 1) {
+    const antes = nombreGrado(); S.grado--; resetProg(); S.caidaDesde = hoyISO();
+    anotar(`Degradación: más de ${ROJOS_MAX} veces en el rojo. Pierde el grado de ${antes}.`, 'deshonor');
+    return 'degradacion';
+  }
+  if (S.situacion === 'orden' && S.grado === 1) {
+    S.situacion = 'escudero'; S.grado = 0; S.abatido = true; resetProg(); S.caidaDesde = hoyISO();
+    S.escuderia = { dias:0, inicio:hoyISO() };
+    anotar(`Degradación: más de ${ROJOS_MAX} veces en el rojo. Vuelve a ${fem()?'escudera':'escudero'} con las armas abatidas.`, 'deshonor');
+    return 'degradacion';
+  }
+  expulsar('rojo', `Más de ${ROJOS_MAX} veces en el rojo siendo ${fem()?'escudera':'escudero'}.`);
+  return 'expulsion';
+}
+/* Balanzas que se examinan esta noche: la más inclinada, la del ánimo de la mañana y una rotatoria */
+function balanzasDeLaNoche(fecha){
+  const d = S.dias[fecha] || {};
+  const A = ANIMOS.find(a => a.id === d.animo);
+  const porVicio = { gula:'mesa', lujuria:'castidad', avaricia:'largueza', ira:'mansedumbre', soberbia:'magnanimidad', acidia:'diligencia', envidia:'benevolencia' };
+  const L = [];
+  const m = balanzaMasInclinada(); if (m) L.push(m.B.id);
+  if (A && A.vicio && porVicio[A.vicio] && !L.includes(porVicio[A.vicio])) L.push(porVicio[A.vicio]);
+  let i = hash(fecha) % BALANZAS.length;
+  while (L.length < 2) { const id = BALANZAS[i % BALANZAS.length].id; if (!L.includes(id)) L.push(id); i++; }
+  return L.slice(0, 3);
 }

@@ -70,7 +70,7 @@ Tras la primera carga funciona sin conexión.
 ### Ingreso (Partes III y IV)
 
 El examen comprende:
-- **Costumbres y vida:** la Parte III íntegra: amor y temor de Dios, nobleza de corazón, intención, cargas y peligros, faltas contra la Orden, vanagloria y adulación. Incluye también el **paraje** o, en su defecto, nobles obras (§§8–10), los **medios** (§16) y los vicios del §20.
+- **Costumbres y vida:** la Parte III íntegra: amor y temor de Dios, nobleza de corazón, intención, cargas y peligros, faltas contra la Orden, vanagloria y adulación. Incluye también el **paraje** o, en su defecto, nobles obras (§§8–10), los **medios** (§16) y una **carta de conducta**: once balanzas que recogen los vicios del §20 y los siete pecados capitales, respondidas por frecuencia en el último mes (nunca, alguna vez, a menudo, casi a diario). Una balanza en rojo impide la entrada.
 - **Conocimientos:** los catorce artículos, los diez mandamientos y los siete sacramentos (IV, §§5–7), con la terminología del Libro («el sacrificio del altar»).
 - **Cuerpo:** la tabla física de su edad y sexo (III, §17).
 
@@ -126,6 +126,35 @@ En cada grado se exige, además, toda la tabla física de la edad.
 - Investidura: 500 puntos. Ascenso: 1.000 puntos.
 
 ---
+
+## Las balanzas
+
+«La templanza es virtud que está en medio de dos vicios, uno por demasía y otro por defecto» (VI, §16). Cada virtud es el fiel entre dos vicios:
+
+| Balanza | Defecto | Exceso | Referencia |
+|---|---|---|---|
+| Templanza en la mesa | Descuido del cuerpo | Gula y embriaguez | VI, §§9, 16 |
+| Castidad | Frialdad con los tuyos | Lujuria | VI, §10 |
+| Largueza | Avaricia | Prodigalidad | VI, §11; V, §14 |
+| Mansedumbre | Consentir la injusticia | Ira y crueldad | VI, §§5, 15 |
+| Magnanimidad y humildad | Pusilanimidad: conformarse con poco | Soberbia y vanagloria | VI, §13; III, §19 |
+| Fortaleza | Cobardía | Temeridad | II, §18; V, §14 |
+| Diligencia | Acidia y pereza | Agitación sin oración | VI, §12; V, §7 |
+| Benevolencia | Indiferencia | Envidia | VI, §14 |
+| Veracidad | Mentira y disimulo | Jactancia y exageración | V, §3 |
+| Lealtad | Deslealtad y perjurio | Servilismo y adulación | II, §§8, 32; III, §19 |
+| Cortesía | Rusticidad: palabra soez y desaliño | Afectación y ostentación | VI, §20; III, §20 |
+
+- **Zonas:** virtud (blanco), dominio (verde), amenaza (ámbar) y peligro (rojo), a cada lado del fiel.
+- **Cada noche**, el examen pregunta por la conducta del día en dos o tres balanzas: la más inclinada, la del ánimo de la mañana y una rotatoria. Las respuestas mueven el fiel.
+- **Cada día**, la balanza más inclinada recibe una prueba que empuja hacia el medio **desde su lado**: no se combate igual la ira que el consentimiento de la injusticia.
+- **El hábito no se borra con el perdón:** la confesión perdona la culpa, pero el fiel solo vuelve al medio con actos contrarios.
+- **Regla del rojo:** las balanzas son guía, salvo que el fiel llegue al rojo más de 3 veces. Entonces se pierde el empleo inmediato inferior; del escudero, la expulsión. El recuento vuelve a cero en cada cambio de grado.
+- **No retroactividad:** quien ya estaba en la Orden conservó su grado; el recuento de rojos empezó en cero, y la carta de conducta que hacen los miembros antiguos es solo informativa.
+
+## El deseo
+
+No se trata de apagar el deseo, sino de cambiar lo que se desea: no conformarse con poco cuando se puede alcanzar el Cielo. Cada mañana, la tarjeta *Sursum corda* propone una aspiración de la Escritura o de los santos y pide formular «mi gran deseo de hoy». Cada noche, la primera pregunta es si uno se dejó gobernar por el Espíritu Santo o por sus gustos. *Ad maiora natus sum* (San Estanislao de Kostka).
 
 ## Exigencia según la edad
 
@@ -289,7 +318,7 @@ Si se borra el navegador, o se pierde o cambia el teléfono, el progreso se pier
 ## Actualizar la aplicación
 
 1. Modifica los archivos.
-2. En `sw.js`, cambia la constante `VERSION` (por ejemplo, de `llull-v6` a `llull-v7`).
+2. En `sw.js`, cambia la constante `VERSION` (por ejemplo, de `llull-v9` a `llull-v10`).
 3. En `app.js`, cambia el parámetro del registro del service worker (por ejemplo, `sw.js?v=4` → `sw.js?v=5`).
 4. Sube los archivos al repositorio.
 

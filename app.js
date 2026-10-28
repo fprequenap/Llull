@@ -99,7 +99,9 @@ function vistaBienvenida(){
     <p>Cada mañana recibes una divisa del Libro según tu ánimo y las circunstancias del día, y las pruebas que has de superar. Cada noche haces examen.</p>
     <p>Para entrar has de pasar el examen del escudero (Parte III) y el de conocimientos (Parte IV), con la tabla física de tu edad (III, §17). Si lo superas, serás armado en una fiesta de precepto; si no, servirás un año como escudero, sin blasón ni caballo.</p>
     <p>Desde caballero de un escudo se asciende a valvasor, comdor y conde (II, §6) superando pruebas. Quien no se mantiene pierde el grado; la falta grave y la acidia llevan a la expulsión. La redención es siempre posible.</p>
-    <p>Con sesenta años o más, quien supera el examen es armado y recibe el grado de conde.</p></div>
+    <p>Con sesenta años o más, quien supera el examen es armado y recibe el grado de conde.</p>
+    <p>La virtud está en el medio, entre dos vicios (VI, §16): tu combate se mide en balanzas que se templan cada día.</p>
+    <p><b>Desea a lo grande.</b> No se trata de apagar el deseo, sino de ordenarlo: no conformarse con poco cuando se puede alcanzar el Cielo, y dejarse gobernar por el Espíritu Santo. <i>Ad maiora natus sum.</i></p></div>
   <div class="card"><h2>Tus datos</h2>
     <label class="campo"><span>Nombre con que serás conocido en la Orden</span><input type="text" id="pnom" maxlength="40" autocomplete="name"></label>
     <label class="campo"><span>Sexo</span><select id="psex"><option value="m">Varón: caballero</option><option value="f">Mujer: dama de la Orden</option></select></label>
@@ -181,13 +183,14 @@ function tarjetaDia(h, disc){
   const dv = d.divisa;
   const A = ANIMOS.find(a=>a.id===d.animo), C = CIRCUNSTANCIAS.find(c=>c.id===d.circ);
   s += `<div class="card roja">${dv.santo ? `<div class="tag v">${esc(dv.santo)}</div>` : ''}
-    <p class="divisa">${esc(dv.t)}</p><div class="ref">${esc(dv.ref)}${dv.p!=null?` · <a href="#" data-a="leerPar" data-p="${dv.p}" data-n="${dv.n}">leer el parágrafo</a>`:''}</div>
+    <p class="divisa${/^[…«]/.test(dv.t)?' sin':''}">${esc(dv.t)}</p><div class="ref">${esc(dv.ref)}${dv.p!=null?` · <a href="#" data-a="leerPar" data-p="${dv.p}" data-n="${dv.n}">leer el parágrafo</a>`:''}</div>
     ${A && A.vicio ? `<p class="peq" style="margin-top:8px">Amaneces ${esc(A.nombre.toLowerCase())}: acecha la ${esc(A.vicio)}. Remedio: ${A.remedio.map(esc).join(' y ')} (${esc(A.ref)}).</p>` : ''}
     ${C && C.id!=='ordinario' ? `<p class="peq">${esc(C.nombre)}.</p>` : ''}</div>`;
+  s += tarjetaDeseo(h, d);
   s += pendienteAyer();
   // pruebas
   s += `<div class="card"><h2>Pruebas del día</h2>${d.pruebas.map((p,i)=>`
-    <div class="prueba"><div class="txt"><span class="tag v">${esc(p.tipo==='moral'?(VIRTUDES[VIRT_IDX[p.v]]||{}).nombre:p.tipo==='arma'?'Arma':'Oficio')}</span><b>${esc(p.t)}</b><span>${esc(p.d)}</span> ${p.ref?`<span class="ref">${esc(p.ref)}</span>`:''}</div>
+    <div class="prueba"><div class="txt"><span class="tag v">${esc(p.tipo==='moral'?(VIRTUDES[VIRT_IDX[p.v]]||{}).nombre:p.tipo==='arma'?'Arma':p.tipo==='balanza'?'Balanza':'Oficio')}</span><b>${esc(p.t)}</b><span>${esc(p.d)}</span> ${p.ref?`<span class="ref">${esc(p.ref)}</span>`:''}</div>
       ${d.cerrado ? `<div>${p.ok?'✔︎':'✘'}</div>` : `<div class="tri"><button class="si ${p.ok===true?'on':''}" data-a="pr" data-i="${i}" data-v="1" aria-label="Superada">✔︎</button><button class="no ${p.ok===false?'on':''}" data-a="pr" data-i="${i}" data-v="0" aria-label="No superada">✘</button></div>`}
     </div>`).join('')}</div>`;
   // ejercicio y física
@@ -217,6 +220,57 @@ function pendienteAyer(){
   return '';
 }
 
+/* ---------- el deseo: Sursum corda ---------- */
+function tarjetaDeseo(h, d){
+  const [t, ref] = ASPIRACIONES[hash(h + 'sursum') % ASPIRACIONES.length];
+  return `<div class="card oro"><h2>Sursum corda</h2><p class="divisa" style="font-size:1.1em">${esc(t)}</p><div class="ref">${esc(ref)}</div>
+    <p style="margin-top:10px">No apagues el deseo: desea a lo grande. Ven, Espíritu Santo, gobierna hoy mi corazón.</p>
+    ${d.deseo ? `<p><b>Mi gran deseo de hoy:</b> ${esc(d.deseo)}</p>` : `<label class="campo"><span>Mi gran deseo de hoy</span><input type="text" id="deseo" maxlength="140" placeholder="¿Qué deseas hoy a lo grande?"></label><button class="btn sec" data-a="deseo">Ofrecerlo</button>`}</div>`;
+}
+
+/* ---------- las balanzas: dibujo y carta de conducta ---------- */
+function balanzaSVG(v, B, peq){
+  v = v || 0; const Z = zonaObj(v), a = v * 0.22, r = a * Math.PI / 180;
+  const cx = 100, cy = 34, L = 70;
+  const xl = cx - L*Math.cos(r), yl = cy - L*Math.sin(r), xr = cx + L*Math.cos(r), yr = cy + L*Math.sin(r);
+  const plato = (x, y) => `<path d="M${x-14},${y+30} L${x},${y} L${x+14},${y+30}" stroke="#5B4A33" stroke-width="1.2" fill="none"/><path d="M${x-20},${y+30} Q${x},${y+44} ${x+20},${y+30} Z" fill="#B8913A" stroke="#5B4A33" stroke-width="1.5"/>`;
+  let arco = '';
+  for (const [i, z] of ZONAS.entries()) {
+    const a0 = (i ? ZONAS[i-1].hasta : 0) * 0.22, a1 = Math.min(z.hasta, 100) * 0.22;
+    for (const sg of [-1, 1]) {
+      const p = ang => [cx + 26*Math.sin(sg*ang*Math.PI/180), cy - 26*Math.cos(sg*ang*Math.PI/180)];
+      const [x0,y0] = p(a0), [x1,y1] = p(a1);
+      arco += `<path d="M${x0.toFixed(1)},${y0.toFixed(1)} A26,26 0 0 ${sg>0?1:0} ${x1.toFixed(1)},${y1.toFixed(1)}" stroke="${z.c}" stroke-width="7" fill="none"${z.borde?` style="stroke:${z.c}"`:''}/>`;
+    }
+  }
+  const nx = cx + 30*Math.sin(r), ny = cy - 30*Math.cos(r);
+  return `<svg viewBox="0 0 200 ${peq?92:118}" width="100%" style="max-width:${peq?220:300}px;display:block;margin:0 auto" role="img" aria-label="${esc(B.nombre)}: ${esc(Z.n)}">
+    <path d="M${cx},${cy} L${cx},104 M80,108 H120" stroke="#5B4A33" stroke-width="4" stroke-linecap="round"/>
+    ${arco}<path d="M${cx},${cy-26} v-4" stroke="#5B4A33" stroke-width="1.5"/>
+    <path d="M${xl.toFixed(1)},${yl.toFixed(1)} L${xr.toFixed(1)},${yr.toFixed(1)}" stroke="#5B4A33" stroke-width="4" stroke-linecap="round"/>
+    ${plato(xl, yl)}${plato(xr, yr)}
+    <path d="M${cx},${cy} L${nx.toFixed(1)},${ny.toFixed(1)}" stroke="${Z.id==='virtud'?'#5B4A33':Z.c}" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="4.5" fill="#B8913A" stroke="#5B4A33" stroke-width="1.5"/>
+    ${peq?'':`<text x="22" y="116" font-size="9" fill="#6B5E4B" font-family="EB Garamond,serif">${esc(B.def.n.split(':')[0])}</text><text x="178" y="116" font-size="9" fill="#6B5E4B" text-anchor="end" font-family="EB Garamond,serif">${esc(B.exc.n.split(':')[0])}</text>`}
+  </svg>`;
+}
+function tarjetaCombate(){
+  if (!['orden','escudero','aspirante','expulsado'].includes(S.situacion)) return '';
+  const lista = BALANZAS.map(B => ({ B, v: S.balanzas[B.id] || 0 })).sort((a,b) => Math.abs(b.v) - Math.abs(a.v));
+  let s = `<div class="card roja"><h2>Mi combate: las balanzas</h2>
+    <p class="peq">«La templanza es virtud que está en medio de dos vicios, uno por demasía y otro por defecto.» <span class="ref">VI, §16</span></p>
+    <p class="peq">${ZONAS.map(z=>`<span class="sw" style="background:${z.c};width:14px;height:14px"></span> ${z.n}`).join(' · ')} · Rojos: <b>${S.rojos||0}</b> de ${ROJOS_MAX} tolerados</p>`;
+  if (!S.cartaInicial) s += `<div class="aviso">Tus balanzas están en el medio porque aún no has hecho la carta de conducta. Es informativa: no cambia tu grado.</div><button class="btn sec" data-a="abrirCarta">Hacer la carta de conducta</button>`;
+  s += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px">${lista.map(({B,v})=>{ const Z = zonaObj(v);
+    return `<div style="border:1px solid var(--linea);border-radius:8px;padding:6px 6px 8px;background:#fff">${balanzaSVG(v,B,true)}<div class="cen" style="font-size:.86em"><b>${esc(B.nombre)}</b><br><span style="color:${Z.id==='virtud'?'#6B5E4B':Z.c}">${esc(Z.n)}${v?` · ${esc(ladoNombre(B,v).split(':')[0].toLowerCase())}`:''}</span><br><span class="ref">${esc(B.ref)}</span></div></div>`; }).join('')}</div></div>`;
+  return s;
+}
+function cartaCompleta(c){ return BALANZAS.every(B => c[B.id] && c[B.id].exc != null && c[B.id].def != null); }
+function cartaHTML(c, accion){
+  return BALANZAS.map(B => `<div class="card"><b>${esc(B.nombre)}</b> <span class="ref">${esc(B.ref)}</span>
+    ${['exc','def'].map(l => `<p style="margin:8px 0 2px">…${esc(B[l].q)}</p><div class="chips">${FREC_MES.map(([n,v]) => `<button class="chip ${c[B.id]&&c[B.id][l]===v?'on':''}" data-a="${accion}" data-b="${B.id}" data-l="${l}" data-v="${v}">${n}</button>`).join('')}</div>`).join('')}</div>`).join('');
+}
+
 /* ---------- examen de la noche ---------- */
 function modal(html){ cerrarModal(); const m = document.createElement('div'); m.className='modal'; m.id='modal'; m.innerHTML = `<div class="hoja">${html}</div>`; m.addEventListener('click', e => { if (e.target === m) cerrarModal(); }); document.body.appendChild(m); enlazarCitas(m); }
 function cerrarModal(){ const m = $('#modal'); if (m) m.remove(); }
@@ -227,8 +281,13 @@ function abrirExamenNoche(fecha){
   const n = numPreguntasNoche(), qs = [];
   let i = 0; const sem = hash(fecha);
   while (qs.length < n && i < 50) { const v = virt[i % virt.length]; const L = EXAMEN[v]; const q = L[(sem + i) % L.length]; if (!qs.includes(q)) qs.push(q); i++; }
-  TMP.noche = { fecha, qs, resp: qs.map(()=>null) };
+  const bals = balanzasDeLaNoche(fecha);
+  TMP.noche = { fecha, qs, resp: qs.map(()=>null), bals, bal:{}, espiritu:null };
   modal(`<h2>Examen de la noche</h2><p class="peq">${esc(deISO(fecha).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}))}</p>
+    <div class="card roja"><p><b>¿Me dejé gobernar hoy por el Espíritu Santo, o por mis gustos?</b> ${d.deseo?`<br><span class="peq">Esta mañana deseaste: «${esc(d.deseo)}»</span>`:''}</p>
+      <div class="chips"><button class="chip" data-a="nesp" data-v="si">Por el Espíritu</button><button class="chip" data-a="nesp" data-v="medias">A medias</button><button class="chip" data-a="nesp" data-v="no">Por mis gustos</button></div></div>
+    <h3>Las balanzas</h3><p class="peq">Hoy…</p>${bals.map(id=>{ const B = BALANZAS.find(x=>x.id===id); return `<div class="card"><b>${esc(B.nombre)}</b> <span class="ref">${esc(B.ref)}</span>
+      ${['exc','def'].map(l=>`<p style="margin:8px 0 2px">…${esc(B[l].q)} <span class="peq">(${esc(B[l].n.toLowerCase())})</span></p><div class="chips">${FREC_HOY.map(([n,v])=>`<button class="chip" data-a="nbal" data-b="${id}" data-l="${l}" data-v="${v}">${n}</button>`).join('')}</div>`).join('')}</div>`; }).join('')}
     <h3>Preguntas</h3>${qs.map((q,j)=>`<div class="prueba"><div class="txt">${esc(q)}</div><div class="tri"><button class="si" data-a="nq" data-i="${j}" data-v="1">Sí</button><button class="no" data-a="nq" data-i="${j}" data-v="0">No</button></div></div>`).join('')}
     <h3 style="margin-top:14px">Pruebas</h3>${d.pruebas.map((p,j)=>`<div class="prueba"><div class="txt"><b>${esc(p.t)}</b></div><div class="tri"><button class="si ${p.ok===true?'on':''}" data-a="npr" data-i="${j}" data-v="1">✔︎</button><button class="no ${p.ok===false?'on':''}" data-a="npr" data-i="${j}" data-v="0">✘</button></div></div>`).join('')}
     <label class="fila" style="margin:12px 0"><input type="checkbox" id="nejer" ${d.ejercicio?'checked':''} style="width:26px;height:26px"> Hice el ejercicio diario</label>
@@ -243,7 +302,7 @@ function borrador(){
   if (!S.borrador) {
     const e = edad();
     const idx = PREGUNTAS.map((_,i)=>i).sort((a,b)=>hash(S.perfil.nombre+a+Date.now()%997)-hash(S.perfil.nombre+b+Date.now()%997)).slice(0, 12);
-    S.borrador = { paso:0, moral:{}, vicios:[], quiz:idx, qresp:{}, fisico:{}, inicio:hoy(), tipo: S.situacion==='expulsado'?'reingreso':'ingreso' };
+    S.borrador = { paso:0, moral:{}, vicios:[], bal:{}, quiz:idx, qresp:{}, fisico:{}, inicio:hoy(), tipo: S.situacion==='expulsado'?'reingreso':'ingreso' };
     guardar();
   }
   return S.borrador;
@@ -262,8 +321,9 @@ function vistaExamen(){
       s += `<div class="card"><p>${esc(q.t)} <span class="ref">${esc(q.ref)}</span></p><div class="chips"><button class="chip ${v===true?'on':''}" data-a="im" data-k="${q.id}" data-v="1">Sí</button><button class="chip ${v===false?'on':''}" data-a="im" data-k="${q.id}" data-v="0">No</button></div></div>`;
     }
     s += `<div class="card"><p>«El escudero orgulloso, mal educado, sucio en palabras y vestidos, de corazón cruel, avaro, mentiroso, desleal, perezoso, iracundo, lujurioso, borracho, glotón, perjuro… no conviene con la Orden de Caballería.» <span class="ref">III, §20</span></p>
-      <p>Marca con verdad aquello de lo que no estás libre:</p><div class="chips">${VICIOS_P20.map(v=>`<button class="chip ${B.vicios.includes(v)?'on':''}" data-a="iv" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div></div>
-      <button class="btn ancho" data-a="ipaso" data-v="1">Siguiente: conocimientos</button>`;
+      <p>La virtud está en el medio, entre dos vicios (VI, §16). Responde por tu conducta en el <b>último mes</b>, no por cómo te ves: con qué frecuencia…</p></div>`;
+    s += cartaHTML(B.bal || (B.bal = {}), 'ib');
+    s += `<button class="btn ancho" data-a="ipaso" data-v="1">Siguiente: conocimientos</button>`;
   } else if (B.paso === 1) {
     s += `<div class="card"><p>«Conviene también que aquel día haya sermón en que se expliquen los catorce artículos en que se funda la fe, los diez mandamientos y los siete sacramentos.» <span class="ref">IV, §4</span></p></div>`;
     B.quiz.forEach((qi, j) => {
@@ -441,7 +501,7 @@ function vistaOrden(){
   if (RUTA.sub === 'reglas') return vistaReglas();
   if (!S.perfil) return `<p>Preséntate primero al examen.</p>`;
   const e = edad();
-  let s = `<h1>La Orden</h1><div class="card oro"><h2>${esc(nombreGrado())}</h2>
+  let s = `<h1>La Orden</h1>` + tarjetaCombate() + `<div class="card oro"><h2>${esc(nombreGrado())}</h2>
     <table class="tab"><tr><td>Edad</td><td>${e} años (franja ${FRANJA_NOMBRE[franja(e)]})</td></tr>
     <tr><td>Exigencia moral</td><td>${Math.round(cMoral()*100)} % (100 + ${compEdad(e)} por edad + ${S.situacion==='orden'?GRADOS[S.grado].comp:0} por grado)</td></tr>
     <tr><td>Exigencia física</td><td>${Math.round(cFisico()*100)} % (solo edad)</td></tr>
@@ -473,6 +533,10 @@ function vistaReglas(){
   <p>La exigencia moral fija la nota mínima de los exámenes (70 % × coeficiente), los fallos tolerados (5 ÷ coeficiente en ${VENTANA} días), las pruebas diarias (1, 2 o 3) y las preguntas del examen nocturno (3, 5 o 7).</p></div>
   <div class="card"><h3>Caída, expulsión y redención</h3><p>Quien supera los fallos tolerados pierde con deshonor un grado y debe reconquistarlo; el caballero que cae vuelve a escudero con las armas abatidas. La falta grave declarada (III, §§18–20) y la acidia, ${DIAS_ACIDIA} días sin examen (VI, §12), llevan a la expulsión.</p>
   <p>La redención es siempre posible: confesión, penitencia (${PENITENCIA.falta} días superados por falta grave, ${PENITENCIA.acidia} por acidia) y examen de reingreso. Las armas no se rediseñan: se restituyen al ser armado de nuevo.</p></div>
+  <div class="card"><h3>Las balanzas (VI, §16)</h3><p>Cada virtud es el fiel entre dos vicios, uno por defecto y otro por exceso. Once balanzas recogen los siete pecados capitales y los vicios del III, §20. El fiel se mueve cada noche según tu conducta y se acerca al medio con las pruebas superadas; la confesión perdona la culpa, pero el hábito solo se templa con actos contrarios.</p>
+  <p>Zonas: virtud (blanco), dominio (verde), amenaza (ámbar) y peligro (rojo). Las balanzas son guía, salvo una regla: si el fiel llega al rojo más de ${ROJOS_MAX} veces, se pierde el empleo inmediato inferior; de escudero, la expulsión. El recuento vuelve a cero en cada cambio de grado.</p>
+  <p>En el examen de ingreso, una balanza en rojo impide la entrada. Esta regla no es retroactiva: quien ya estaba en la Orden conserva su grado, y el recuento de rojos empezó de cero al introducirse.</p></div>
+  <div class="card"><h3>El deseo</h3><p>No se trata de apagar el deseo, sino de cambiar lo que se desea: no conformarse con poco cuando se puede alcanzar el Cielo. La ascética de las pruebas sirve a ese fin: dejarse gobernar por el Espíritu Santo. <i>Ad maiora natus sum.</i></p></div>
   <div class="card"><h3>Honra</h3><p>10 puntos por prueba superada. Las disciplinas opcionales multiplican la honra de un día superado (tope ×${TOPE_MULT}); nunca compensan un fallo. Investidura: 500. Ascenso: 1000.</p></div>`;
 }
 
@@ -622,10 +686,14 @@ const ACC = {
     if (N.resp.some(r => r === null)) return toast('Responde a todas las preguntas.');
     if (d.pruebas.some(p => p.ok === null)) return toast('Declara cada prueba: superada o no.');
     d.ejercicio = $('#nejer').checked;
+    if (N.bals.some(id => !N.bal[id] || N.bal[id].exc == null || N.bal[id].def == null)) return toast('Responde a las preguntas de las balanzas.');
+    if (!N.espiritu) return toast('Responde a la primera pregunta: ¿quién te gobernó hoy?');
+    d.espiritu = N.espiritu;
     const falta = $('#nfalta').value;
-    const r = cerrarDia(N.fecha, N.resp, falta);
+    const r = cerrarDia(N.fecha, N.resp, falta, N.bal);
     cerrarModal(); render();
     if (r && r.eventos.includes('expulsion')) toast('Expulsión de la Orden. La redención es siempre posible.', 4000);
+    else if (r && r.eventos.includes('degradacion')) toast(`Más de ${ROJOS_MAX} veces en el rojo: degradación. Reconquístalo.`, 4500);
     else if (r && r.eventos.includes('caida')) toast('No te has mantenido: pierdes con deshonor. Reconquístalo.', 4000);
     else if (r && r.eventos.includes('ascenso')) { toast(`Asciendes a ${nombreGrado()}.`, 4000); splash(); }
     else toast(d.superado ? `Día superado. Honra: +${d.honra}` : 'Día no superado.');
@@ -636,7 +704,7 @@ const ACC = {
   iq: el => { borrador().qresp[el.dataset.q] = +el.dataset.v; guardar(); render(); },
   ipaso: el => {
     const B = borrador(), v = +el.dataset.v;
-    if (B.paso === 0 && v === 1 && INGRESO.some(q => !q.obras && B.moral[q.id] === undefined)) return toast('Responde a todas las preguntas.');
+    if (B.paso === 0 && v === 1 && (INGRESO.some(q => !q.obras && B.moral[q.id] === undefined) || !cartaCompleta(B.bal || {}))) return toast('Responde a todas las preguntas.');
     if (B.paso === 1 && v === 2 && B.quiz.some(q => B.qresp[q] === undefined)) return toast('Responde a todas las preguntas.');
     if (B.paso === 2) guardarMarcas();
     B.paso = v; guardar(); render(); window.scrollTo(0,0);
@@ -646,12 +714,19 @@ const ACC = {
     guardarMarcas();
     const B = borrador();
     const aciertos = B.quiz.filter(q => B.qresp[q] === PREGUNTAS[q][2]).length;
-    const res = evaluarIngreso({ moral:B.moral, vicios:B.vicios, fisico:B.fisico, quiz:{ aciertos, total:B.quiz.length } });
+    const res = evaluarIngreso({ moral:B.moral, vicios:[], bal:B.bal || {}, fisico:B.fisico, quiz:{ aciertos, total:B.quiz.length } });
     aplicarIngreso(res, B.tipo);
     TMP.resIngreso = res; S.borrador = null; guardar();
     go('hoy', 'examen');
   },
   reexUnidades: () => { S.reexUnidades = true; S.borrador = null; S.situacion = 'nuevo'; S.escuderia = { dias:0, inicio:null }; anotar('Repite el examen de ingreso por la corrección de unidades.'); guardar(); go('hoy','examen'); },
+  ib: el => { const B = borrador(); B.bal = B.bal || {}; const o = B.bal[el.dataset.b] = B.bal[el.dataset.b] || {}; o[el.dataset.l] = +el.dataset.v; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); },
+  cb: el => { const C = TMP.carta; const o = C[el.dataset.b] = C[el.dataset.b] || {}; o[el.dataset.l] = +el.dataset.v; el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); el.classList.add('on'); },
+  abrirCarta: () => { TMP.carta = {}; modal(`<h2>Carta de conducta</h2><p>Informativa: sitúa tus balanzas, pero no altera tu grado ni cuenta como rojo. Responde por tu conducta en el <b>último mes</b>: con qué frecuencia…</p>${cartaHTML({}, 'cb')}<button class="btn ancho" data-a="guardarCarta">Situar mis balanzas</button>`); },
+  guardarCarta: () => { if (!cartaCompleta(TMP.carta)) return toast('Responde a todas las preguntas.'); S.balanzas = cartaABalanzas(TMP.carta); S.cartaInicial = hoy(); anotar('Sitúa sus balanzas con la carta de conducta.'); guardar(); cerrarModal(); render(); },
+  nbal: el => { const N = TMP.noche; const o = N.bal[el.dataset.b] = N.bal[el.dataset.b] || {}; o[el.dataset.l] = +el.dataset.v; el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); el.classList.add('on'); },
+  nesp: el => { TMP.noche.espiritu = el.dataset.v; el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); el.classList.add('on'); },
+  deseo: () => { const d = S.dias[hoy()]; d.deseo = ($('#deseo').value || '').trim(); guardar(); toast('Que así sea.'); render(); },
   finIngreso: () => { TMP.resIngreso = null; go('hoy'); },
   fiesta: el => { const F = proximasFiestas(new Date(), 6); señalarFiesta(F[+el.dataset.v]); render(); },
   cambiarFiesta: () => { S.investidura = null; guardar(); render(); },
@@ -848,7 +923,7 @@ comprobarAcidia();
 render();
 splash();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=6').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=7').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;

@@ -254,8 +254,6 @@ const INGRESO = [
   { id:'intencion', t:'¿Pretendes la Orden para ser rico, para señorear o para ser honrado sin honrar a la Caballería?', ok:false, elim:true, ref:'III, §13' },
   { id:'cargas', t:'¿Conoces y aceptas el gran cargo y los peligros de la Orden, teniendo mayor horror a la vergüenza que a la muerte?', ok:true, ref:'III, §15' },
   { id:'falta', t:'¿Has cometido alguna maldad o engaño grave contra la Orden de Caballería —traición, perjurio, robo— sin haberla reparado?', ok:false, elim:true, ref:'III, §18' },
-  { id:'vanagloria', t:'¿Tienes vanagloria de lo que haces?', ok:false, ref:'III, §19' },
-  { id:'adulador', t:'¿Eres adulador?', ok:false, ref:'III, §19' },
   { id:'paraje', t:'¿Procedes de linaje honrado —honor antiguo continuado, esto es, paraje—?', paraje:true, ref:'III, §8' },
   { id:'obras', t:'Si no procedes de paraje: ¿te acreditan muchas y nobles obras y costumbres, por las que la Orden consiente al de linaje recién honrado?', obras:true, ref:'III, §10' },
   { id:'medios', t:'¿Tienes armas y medios bastantes para sostener tu estado y tu oficio sin vivir del engaño ni de lo ajeno?', ok:true, elim:true, ref:'III, §16' }
@@ -308,3 +306,98 @@ const SANTOS_CABALLEROS = {
   '9-29':['San Miguel Arcángel','La fortaleza es virtud que está en el corazón noble contra los siete pecados mortales.','VI, §8'],
   '11-11':['San Martín de Tours','Oficio de caballero es amparar a las viudas, los huérfanos y los desvalidos.','II, §19']
 };
+
+/* =====================================================================
+   LAS BALANZAS: cada virtud es el fiel entre dos vicios (VI, §16: «la templanza
+   está en medio de dos vicios, uno por demasía y otro por defecto»).
+   v ∈ [−100, +100]: negativo = defecto; positivo = exceso; 0 = el medio.
+   q: preguntas de conducta (examen de ingreso, carta y examen nocturno).
+   p: pruebas que empujan hacia el medio desde cada lado.
+   ===================================================================== */
+const BALANZAS = [
+  { id:'mesa', virtud:'templanza', nombre:'Templanza en la mesa', ref:'VI, §§9, 16',
+    def:{ n:'Descuido del cuerpo', q:'¿descuidaste el sustento y el descanso que tu oficio necesita?',
+      p:['Haz hoy las tres comidas a su hora, con gratitud.','Bendice la mesa y come con calma, en compañía.','Duerme las horas que tu oficio necesita.'] },
+    exc:{ n:'Gula y embriaguez', q:'¿comiste o bebiste más de lo necesario, o bebiste hasta perder el dominio?',
+      p:['Come sin repetir y sin picar entre horas.','No tomes hoy ninguna bebida alcohólica.','Levántate de la mesa con un poco de apetito.'] } },
+  { id:'castidad', virtud:'fortaleza', nombre:'Castidad', ref:'VI, §10',
+    def:{ n:'Frialdad con los tuyos', q:'¿fuiste frío o desabrido con el afecto que debes a tu esposa y a los tuyos?',
+      p:['Ten hoy un gesto concreto de afecto con los tuyos.','Dedica una hora sin pantallas a tu familia.','Di a alguien de tu casa algo que le agradeces.'] },
+    exc:{ n:'Lujuria', q:'¿consentiste miradas, pensamientos o contenidos impuros?',
+      p:['Guarda la vista en pantallas y en la calle todo el día.','Ante la primera tentación, apártate y reza un Avemaría.','Deja el teléfono fuera del dormitorio esta noche.'] } },
+  { id:'largueza', virtud:'caridad', nombre:'Largueza', ref:'VI, §11; V, §14',
+    def:{ n:'Avaricia', q:'¿te negaste a dar o a compartir cuando podías y debías?',
+      p:['Da hoy una limosna concreta, sin que se sepa.','Comparte algo tuyo que te cueste dar.','Paga a tiempo y sin regatear al pobre.'] },
+    exc:{ n:'Prodigalidad', q:'¿gastaste o diste sin medida, de modo que luego te falte para tu deber?',
+      p:['No compres nada que no sea necesario.','Revisa tus gastos de la semana.','Antes de un gasto o una dádiva grande, espera un día y pide consejo.'] } },
+  { id:'mansedumbre', virtud:'templanza', nombre:'Mansedumbre', ref:'VI, §§5, 15',
+    def:{ n:'Consentir la injusticia', q:'¿callaste o consentiste una injusticia que debías corregir?',
+      p:['Defiende hoy a quien sea tratado injustamente.','Corrige con verdad y caridad lo que venías tolerando.','Da la cara en el asunto que venías evitando.'] },
+    exc:{ n:'Ira y crueldad', q:'¿alzaste la voz, respondiste con ira o trataste a alguien con dureza?',
+      p:['Cuenta hasta diez antes de responder, y responde con calma.','Pide perdón a quien trataste con dureza.','Ni una palabra áspera a los de tu casa.'] } },
+  { id:'magnanimidad', virtud:'esperanza', nombre:'Magnanimidad y humildad', ref:'VI, §13; III, §19',
+    def:{ n:'Pusilanimidad: conformarse con poco', q:'¿te conformaste con poco, renunciaste a algo grande por miedo o comodidad, o te dejaste abatir?',
+      p:['Emprende hoy algo grande que venías aplazando por miedo.','Pide a Dios algo grande, no solo lo pequeño.','Ofrece el trabajo del día por una intención grande: la Iglesia, tu patria, la conversión de alguien.'] },
+    exc:{ n:'Soberbia y vanagloria', q:'¿buscaste ser alabado, te pusiste por encima de otros o hablaste de tus méritos?',
+      p:['No hables de ti ni de tus méritos en todo el día.','Cede el mejor sitio, el turno o la razón en algo menor.','Haz un bien sin que nadie lo sepa.'] } },
+  { id:'fortaleza', virtud:'fortaleza', nombre:'Fortaleza', ref:'II, §18; V, §14',
+    def:{ n:'Cobardía', q:'¿huiste de un deber, de una verdad o de un peligro por miedo?',
+      p:['Afronta hoy lo que temes.','Di la verdad que venías callando.','Haz primero lo más difícil.'] },
+    exc:{ n:'Temeridad', q:'¿actuaste con arrojo sin cordura, exponiéndote a ti o a otros sin necesidad?',
+      p:['Antes de actuar con fuerza, pide consejo.','Espera a mañana para resolver lo que hoy te arrebata.','Conduce, entrena y trabaja sin exponerte sin necesidad.'] } },
+  { id:'diligencia', virtud:'esperanza', nombre:'Diligencia', ref:'VI, §12; V, §7',
+    def:{ n:'Acidia y pereza', q:'¿dejaste por desgana lo que debías hacer, o te pesó el bien espiritual?',
+      p:['Levántate a la hora fijada, sin conceder minutos.','Termina una tarea que tenías abandonada.','Reza aunque no tengas ganas.'] },
+    exc:{ n:'Agitación sin oración', q:'¿te arrastraron la prisa y el trabajo hasta no tener tiempo para Dios ni para los tuyos?',
+      p:['Guarda quince minutos de oración en silencio.','Deja el trabajo a su hora y dedica la tarde a los tuyos.','Haz una sola cosa cada vez, con atención.'] } },
+  { id:'benevolencia', virtud:'justicia', nombre:'Benevolencia', ref:'VI, §14',
+    def:{ n:'Indiferencia', q:'¿te fue indiferente la necesidad o la alegría de los que te rodean?',
+      p:['Interésate de verdad por alguien de tu entorno.','Felicita a alguien por un logro.','Acompaña a alguien en una pena.'] },
+    exc:{ n:'Envidia', q:'¿te entristeció el bien de otro o te alegró su mal?',
+      p:['Alégrate de un bien ajeno y dilo.','Reza por aquel a quien envidias.','Habla bien de un rival.'] } },
+  { id:'veracidad', virtud:'justicia', nombre:'Veracidad', ref:'V, §3',
+    def:{ n:'Mentira y disimulo', q:'¿dijiste alguna mentira o callaste una verdad debida?',
+      p:['Ni una mentira hoy, ni de conveniencia.','Di la verdad que debías.','Reconoce ante quien corresponda un error tuyo.'] },
+    exc:{ n:'Jactancia y exageración', q:'¿exageraste, presumiste o dijiste más de lo que era?',
+      p:['Cuenta las cosas sin adornarlas.','No hables de lo que no sabes.','Calla una vez en que ibas a presumir.'] } },
+  { id:'lealtad', virtud:'justicia', nombre:'Lealtad', ref:'II, §§8, 32; III, §19',
+    def:{ n:'Deslealtad y perjurio', q:'¿faltaste a tu palabra, a un compromiso o a la lealtad debida?',
+      p:['Cumple hoy un compromiso pendiente.','Defiende la buena fama de quien sirves.','Sé puntual en todo.'] },
+    exc:{ n:'Servilismo y adulación', q:'¿adulaste o diste la razón por agradar, contra lo verdadero?',
+      p:['Di con respeto lo que piensas, aunque no agrade.','No alabes lo que no merece alabanza.','Aconseja con verdad a quien sirves.'] } },
+  { id:'cortesia', virtud:'templanza', nombre:'Cortesía', ref:'VI, §20; III, §20',
+    def:{ n:'Rusticidad: palabra soez y desaliño', q:'¿usaste palabras soeces o descuidaste tu aseo y tu porte?',
+      p:['Ninguna palabra soez en todo el día.','Viste con aseo y decoro.','Saluda y agradece a cada persona con quien trates.'] },
+    exc:{ n:'Afectación y ostentación', q:'¿buscaste lucirte en el vestir, en el gasto o en las maneras?',
+      p:['Viste con sencillez, sin ostentación.','No hables de lo que tienes ni de lo que gastas.','Trata igual al humilde que al importante.'] } }
+];
+/* Zonas de la balanza: el fiel en el medio, la amenaza y el peligro a cada lado */
+const ZONAS = [
+  { id:'virtud', n:'Virtud', hasta:20, c:'#F3F1EA', borde:'#8A7B63' },
+  { id:'dominio', n:'Dominio', hasta:45, c:'#2F6B37' },
+  { id:'amenaza', n:'Amenaza', hasta:70, c:'#C98A12' },
+  { id:'peligro', n:'Peligro', hasta:101, c:'#B3201F' }
+];
+/* Frecuencias del examen de conducta (último mes) y del examen nocturno (hoy) */
+const FREC_MES = [['Nunca',0],['Alguna vez',30],['A menudo',55],['Casi a diario',85]];
+const FREC_HOY = [['No',0],['Una vez',8],['Varias veces',18]];
+const ROJOS_MAX = 3;   // al alcanzar el rojo más de tres veces, degradación
+
+/* SURSUM CORDA: no apagar el deseo, sino ordenarlo hacia lo más alto */
+const ASPIRACIONES = [
+  ['Nos hiciste, Señor, para ti, y nuestro corazón está inquieto hasta que descanse en ti.','San Agustín, Confesiones, I, 1'],
+  ['Ad maiora natus sum: nací para cosas mayores.','San Estanislao de Kostka'],
+  ['¡Oh almas criadas para estas grandezas y para ellas llamadas!, ¿qué hacéis?, ¿en qué os entretenéis?','San Juan de la Cruz, Cántico espiritual, canción 39, 7'],
+  ['Abre tu boca y yo la llenaré.','Salmo 80, 11'],
+  ['Deléitate en el Señor, y te dará lo que pide tu corazón.','Salmo 36, 4'],
+  ['Los que se dejan guiar por el Espíritu de Dios, esos son hijos de Dios.','Romanos 8, 14'],
+  ['Caminad según el Espíritu, y no satisfaréis los deseos de la carne.','Gálatas 5, 16'],
+  ['Fuego vine a traer a la tierra, ¿y qué quiero sino que arda?','Lucas 12, 49'],
+  ['Buscad primero el reino de Dios y su justicia, y todo lo demás se os dará por añadidura.','Mateo 6, 33'],
+  ['Sed perfectos, como vuestro Padre celestial es perfecto.','Mateo 5, 48'],
+  ['Ensancha el espacio de tu tienda.','Isaías 54, 2'],
+  ['Una grande y muy determinada determinación de no parar hasta llegar a ella.','Santa Teresa de Jesús, Camino de perfección, 21, 2'],
+  ['Todo caballero debe conocer las siete virtudes, raíz y principio de todas las buenas costumbres y camino de la gloria celestial y perdurable.','Llull, VI, §2'],
+  ['Ad maiorem Dei gloriam.','San Ignacio de Loyola'],
+  ['Veni, Sancte Spiritus, reple tuorum corda fidelium, et tui amoris in eis ignem accende.','Antífona de Pentecostés']
+];
