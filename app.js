@@ -59,7 +59,7 @@ function splash(){
   if (!S.perfil) return;
   const E = estadoEscudo();
   const d = document.createElement('div'); d.className = 'splash';
-  d.innerHTML = `${logroSVG(E.b, E.g, E.e)}<div class="nom">${esc(S.perfil.nombre)}</div><div class="gr">${esc(nombreGrado())}</div>
+  d.innerHTML = `${retratoURL() ? `<div style="margin-bottom:-6px">${medallonSVG(130)}</div>` : ''}${logroSVG(E.b, E.g, E.e)}<div class="nom">${esc(S.perfil.nombre)}</div><div class="gr">${esc(nombreGrado())}</div>
     ${S.blason && E.e==null ? `<div class="peq cen" style="max-width:420px;margin-top:6px">${esc(blasonar(S.blason))}</div>` : ''}`;
   document.body.appendChild(d);
   const fuera = () => { d.style.opacity = 0; setTimeout(()=>d.remove(), 600); };
@@ -499,7 +499,7 @@ function vistaInvestidura(){
       else if (p.id === 'juramento') accion = `<div class="card" style="background:#fff"><p><i>${esc(JURAMENTO)}</i></p></div><button class="btn" data-a="pasoInv" data-v="juramento">Lo juro</button>`;
       else if (p.id === 'ceremonia') accion = ceremoniaHTML();
       else if (p.id === 'armas') accion = S.blason ? `<p>Tus armas, abatidas por tu caída, te son restituidas.</p><div class="logro">${logroSVG(S.blason,1,null)}</div><button class="btn" data-a="pasoInv" data-v="armas">Recibir mis armas</button>` : `<button class="btn" data-a="sub" data-t="armas" data-v="constructor">Componer mis armas</button>`;
-      else if (p.id === 'mostrarse') accion = `<button class="btn" data-a="compartir">Mostrar mis armas a las gentes</button> <button class="btn sec" data-a="pasoInv" data-v="mostrarse">Hecho</button>`;
+      else if (p.id === 'mostrarse') accion = `${retratoURL() ? '' : '<p class="peq">Si añades tu retrato en Más › Ajustes, aparecerá en la lámina.</p>'}<div class="fila"><button class="btn" data-a="laminaInvestidura">Compartir la lámina de investidura</button><button class="btn sec" data-a="compartir">Solo mis armas</button><button class="btn sec" data-a="pasoInv" data-v="mostrarse">Hecho</button></div>`;
       else if (p.id === 'dadivas') accion = `<label class="campo"><span>¿Qué dádiva has repartido?</span><input type="text" id="dadiva" maxlength="120"></label><button class="btn" data-a="dadiva">Anotar y terminar</button>`;
       else accion = `<button class="btn sec" data-a="pasoInv" data-v="${p.id}">Hecho</button>`;
     }
@@ -590,9 +590,9 @@ function vistaArmas(){
   if (E.e === 'blanco') s += `<div class="card"><div class="logro">${logroSVG(null,0,'blanco')}</div><p>«Las armas en el escudo, la silla y el perpunte se dan al caballero para que sea alabado por los ardimientos que emprenda.» <span class="ref">V, §18</span></p><p>${S.situacion==='orden'?'':'El escudero no lleva blasón. Elegirás tus armas el día de tu investidura.'}</p>
     ${S.situacion==='orden' && !S.blason ? '<button class="btn" data-a="sub" data-t="armas" data-v="constructor">Componer mis armas</button>' : ''}</div>`;
   else if (E.e === 'abatido') s += `<div class="card negra"><div class="logro">${logroSVG(S.blason,0,'abatido')}</div><p>Armas abatidas. Te serán restituidas cuando reconquistes la caballería.</p></div>`;
-  else s += `<div class="card"><div class="logro">${logroSVG(S.blason,S.grado,null)}</div><p class="cen"><i>${esc(blasonar(S.blason))}</i></p>
+  else s += `<div class="card">${retratoURL() ? `<div class="cen">${medallonSVG(150)}</div>` : `<p class="peq cen">Añade tu retrato en Más › Ajustes para verlo junto a tus armas y en tu lámina.</p>`}<div class="logro">${logroSVG(S.blason,S.grado,null)}</div><p class="cen"><i>${esc(blasonar(S.blason))}</i></p>
     <p class="peq cen">Ornamentos de ${esc(nombreGrado())}: ${['','yelmo','yelmo, lambrequines y cimera','yelmo, lambrequines, cimera y pendones','corona condal, manto, yelmo, lambrequines, cimera y pendones'][S.grado]}. La corona de conde (18 perlas, 9 vistas) es la de la heráldica española; los ornamentos de valvasor y comdor son convención de esta Orden.</p>
-    <div class="fila" style="justify-content:center"><button class="btn" data-a="compartir">Compartir mis armas</button></div></div>`;
+    <div class="fila" style="justify-content:center"><button class="btn" data-a="compartir">Compartir mis armas</button><button class="btn sec" data-a="laminaGrado">Lámina de mi grado</button></div></div>`;
   s += `<h2>La panoplia</h2><p class="peq">Las armas del caballero y su significación (Parte V).</p><div class="card">${ARMAS.map(a=>{
     const est = S.situacion==='orden' ? (S.prog.armas[a.id] || S.grado>=2 ? 'probada' : '') : (S.armasConocidas[a.id] ? 'aprendida' : '');
     return `<div class="prueba"><div class="txt"><b>${esc(a.nombre)}</b> <span class="ref">V, §${a.n}</span>${est?` <span class="tag v">${est}</span>`:''}<br>${esc(a.sig)}<br><span class="peq">Virtud: ${esc(VIRTUDES[VIRT_IDX[a.virtud]].nombre)}</span></div></div>`; }).join('')}</div>`;
@@ -749,6 +749,12 @@ function vistaAjustes(){
   const A = S.ajustes, e = S.perfil ? edad() : 30;
   const disp = opcionalesDisponibles(e), mias = S.perfil ? (S.perfil.opcionales||[]) : [];
   return `<h1>Ajustes</h1>
+    ${S.perfil ? `<div class="card"><h3>Mi retrato</h3>
+      ${retratoURL() ? `<div class="cen">${medallonSVG(150)}</div>
+        <div class="chips" style="justify-content:center"><button class="chip ${S.perfil.estiloRetrato!=='natural'?'on':''}" data-a="estiloRetrato" data-v="ilustrado">Ilustrado</button><button class="chip ${S.perfil.estiloRetrato==='natural'?'on':''}" data-a="estiloRetrato" data-v="natural">Foto natural</button></div>` : '<p>Tu rostro aparecerá en el medallón, en el escudero y en la lámina de investidura.</p>'}
+      <label class="btn sec" style="cursor:pointer">${retratoURL()?'Cambiar retrato':'Añadir retrato'}<input type="file" id="fret" accept="image/*" style="display:none"></label>
+      ${retratoURL() ? '<button class="btn sec" data-a="borrarRetrato">Quitar retrato</button>' : ''}
+      <p class="peq">La foto se recorta, se reduce y se guarda solo en este teléfono; entra en la copia de seguridad.</p></div>` : ''}
     <div class="card"><label class="campo"><span>Tamaño de la letra: ${A.tam||19} px</span><input type="range" min="15" max="26" value="${A.tam||19}" data-a="tam" style="width:100%"></label>
     <label class="campo"><span>Lector</span><select data-a="cols"><option value="ambas" ${A.columnas==='ambas'?'selected':''}>Lemosín y español</option><option value="es" ${A.columnas==='es'?'selected':''}>Solo español</option><option value="lem" ${A.columnas==='lem'?'selected':''}>Solo lemosín</option></select></label></div>
     ${S.perfil ? `<div class="card"><h3>Disciplinas que practicas</h3><p class="peq">${e>=65?'Como el viejo caballero del Prólogo, las disciplinas de monta y armas se sustituyen por las del estudio y las artes.':'Multiplican la honra de los días superados en que las practiques.'}</p>
@@ -863,6 +869,11 @@ const ACC = {
   voz: el => leerEnVoz([el.dataset.t]),
   vozPars: el => { const P = LIBRO.partes[+el.dataset.p]; const ns = el.dataset.n ? el.dataset.n.split(',').map(Number) : P.pars.map(x=>x.n); leerEnVoz(ns.map(n => P.pars.find(x=>x.n===n)).filter(Boolean).map(x => x.es)); },
   vozParar: () => { if (vozDisponible()) speechSynthesis.cancel(); },
+  guardarRetrato: () => { guardarRetrato(); cerrarModal(); render(); toast('Retrato guardado.'); },
+  estiloRetrato: el => { S.perfil.estiloRetrato = el.dataset.v; guardar(); render(); },
+  borrarRetrato: () => { if (!TMP.borrarRet) { TMP.borrarRet = true; toast('Pulsa otra vez para quitar el retrato.'); return; } TMP.borrarRet = false; delete S.perfil.retrato; guardar(); render(); },
+  laminaInvestidura: () => compartirLamina({ titulo: fem() ? 'Armada dama de la Orden' : 'Armado caballero de la Orden', grado: edad() >= EDAD_CONDE ? 4 : 1, fiesta: S.investidura.nombre, fecha: S.investidura.fecha }),
+  laminaGrado: () => compartirLamina({ titulo: 'Grado en la Orden de Caballería', grado: S.grado, fiesta: null, fecha: hoy() }),
   finIngreso: () => { TMP.resIngreso = null; go('hoy'); },
   fiesta: el => { const F = proximasFiestas(new Date(), 6); señalarFiesta(F[+el.dataset.v]); render(); },
   cambiarFiesta: () => { S.investidura = null; guardar(); render(); },
@@ -981,6 +992,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
+  if (el.id === 'fret' && el.files && el.files[0]) { abrirRecorte(el.files[0]); el.value = ''; return; }
   if (el.dataset && el.dataset.a === 'evo') { TMP.evo = el.value; const y = window.scrollY; render(); window.scrollTo(0, y); return; }
   if (el.dataset && el.dataset.a === 'cols') { S.ajustes.columnas = el.value; guardar(); render(); }
   if (el.dataset && el.dataset.a === 'tam') { S.ajustes.tam = +el.value; document.documentElement.style.setProperty('--fs', el.value + 'px'); guardar(); render(); }
@@ -1060,7 +1072,7 @@ comprobarAcidia();
 render();
 splash();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=10').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=11').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;

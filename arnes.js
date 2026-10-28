@@ -92,9 +92,11 @@ function escuderoSVG(id){
   if (tiene('espada')) s += pieza('espada', `<path d="M74,152 L62,236" stroke="#3A2A1C" stroke-width="7" stroke-linecap="round"/><path d="M66,146 L86,150" stroke="#B8913A" stroke-width="4"/><circle cx="77" cy="141" r="4" fill="#B8913A" ${K}/>`);
   if (tiene('maza')) s += pieza('maza', `<path d="M124,152 L130,196" stroke="#5B3B1E" stroke-width="4"/><circle cx="131" cy="202" r="8" fill="${F}" ${K}/>`);
   if (tiene('misericordia')) s += pieza('misericordia', `<path d="M110,152 L112,178" stroke="#5B3B1E" stroke-width="3"/><path d="M106,174 L118,172 L116,184 Z" fill="${F}" ${K}/>`);
-  // cabeza: sin yelmo, el rostro; con yelmo, el yelmo
-  if (tiene('yelmo')) s += pieza('yelmo', `<path d="M82,18 L118,18 C122,30 122,48 118,60 L82,60 C78,48 78,30 82,18 Z" fill="${F}" ${K}/><path d="M84,36 H116" stroke="#1B1A1A" stroke-width="3"/><path d="M100,40 V56 M94,46 h-6 M106,46 h6" stroke="#1B1A1A" stroke-width="1.4"/>`);
+  // cabeza: el escudero va a cara descubierta (con su retrato, si lo tiene) y lleva el yelmo en la mano
+  const ret = typeof retratoURL === 'function' ? retratoURL() : null;
+  if (ret) s += `<defs><clipPath id="${id}-cara"><circle cx="100" cy="36" r="20"/></clipPath></defs><image href="${ret}" x="80" y="16" width="40" height="40" clip-path="url(#${id}-cara)" preserveAspectRatio="xMidYMid slice"/><circle cx="100" cy="36" r="20" fill="none" ${K}/>`;
   else s += `<circle cx="100" cy="38" r="17" fill="#E2B48C" ${K}/><path d="M83,34 C84,20 116,20 117,34 C112,26 88,26 83,34 Z" fill="#5B3B1E"/><circle cx="94" cy="40" r="1.6" fill="#1B1A1A"/><circle cx="106" cy="40" r="1.6" fill="#1B1A1A"/>`;
+  if (tiene('yelmo')) s += pieza('yelmo', `<g transform="translate(150 150) scale(.62)"><path d="M-18,-20 L18,-20 C22,-8 22,10 18,22 L-18,22 C-22,10 -22,-8 -18,-20 Z" fill="${F}" ${K}/><path d="M-16,-2 H16" stroke="#1B1A1A" stroke-width="3"/><path d="M0,2 V18 M-6,8 h-6 M6,8 h6" stroke="#1B1A1A" stroke-width="1.4"/></g>`);
   if (tiene('gola')) s += pieza('gola', `<path d="M86,56 L114,56 L118,68 L82,68 Z" fill="${F}" ${K}/>`);
   // escudo raso (o invertido si abatido)
   if (tiene('escudo')) s += pieza('escudo', escudoPequeno(id, (S.abatido || S.situacion==='expulsado') ? S.blason : null, 136, 96, 44, S.abatido || S.situacion==='expulsado'));

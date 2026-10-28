@@ -172,6 +172,16 @@ En cada grado se exige, además, toda la tabla física de la edad.
 - **Evolución:** gráfico de la cercanía a la Orden y de cada balanza, noche a noche, con las mediciones mensuales marcadas.
 - **El Libro en voz alta:** la divisa, cualquier cita y cada Parte del Libro pueden escucharse con la voz del teléfono.
 
+## Mi retrato
+
+En Más › Ajustes se puede añadir una foto del rostro: se encuadra con el dedo y se guarda reducida (unos 10 KB) solo en el teléfono; entra en la copia de seguridad y se puede cambiar o quitar.
+
+- **Estilo:** ilustrado (tonos reducidos, paleta de pergamino y contorno en tinta) o foto natural.
+- **Medallón:** el retrato en orla de gules y oro, en la pantalla de arranque y en Mis armas.
+- **El escudero:** su rostro es el retrato; lleva el yelmo en la mano durante su año de escudería.
+- **Lámina de investidura:** imagen para compartir el día de la investidura (IV, §12), con el retrato, las armas, el grado, la fiesta, la fecha, el padrino y el blasonado. En Mis armas, «Lámina de mi grado» genera la del grado actual.
+- Los estados de caída y deshonor nunca se aplican al rostro: solo a las armas.
+
 ## El deseo
 
 No se trata de apagar el deseo, sino de cambiar lo que se desea: no conformarse con poco cuando se puede alcanzar el Cielo. Cada mañana, la tarjeta *Sursum corda* propone una aspiración de la Escritura o de los santos y pide formular «mi gran deseo de hoy». Cada noche, la primera pregunta es si uno se dejó gobernar por el Espíritu Santo o por sus gustos. *Ad maiora natus sum* (San Estanislao de Kostka).
@@ -317,6 +327,7 @@ El blasón aparece al abrir la aplicación y en *Mis armas*, y puede compartirse
 | `fisico.js` | Tabla física, coeficientes, ejercicios, nutrición y calendario litúrgico |
 | `blason.js` | Heráldica: dibujo SVG, regla de esmaltes y blasonado |
 | `arnes.js` | Mi arnés: el escudero y el caballero armado, con el estado de cada pieza |
+| `retrato.js` | Mi retrato: recorte, medallón y lámina de investidura |
 | `data.js` | Texto íntegro del Libro y las 365 divisas |
 | `sw.js` | Service worker: funcionamiento sin conexión y actualización |
 | `llull.webmanifest` | Manifiesto de la PWA |
