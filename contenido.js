@@ -385,7 +385,7 @@ const ROJOS_MAX = 3;   // al alcanzar el rojo más de tres veces, degradación
 
 /* SURSUM CORDA: no apagar el deseo, sino ordenarlo hacia lo más alto */
 const ASPIRACIONES = [
-  ['Nos hiciste, Señor, para ti, y nuestro corazón está inquieto hasta que descanse en ti.','San Agustín, Confesiones, I, 1'],
+  ['Nos hiciste, Señor, para Ti, y nuestro corazón está inquieto hasta que descanse en Ti.','San Agustín, Confesiones, I, 1'],
   ['Ad maiora natus sum: nací para cosas mayores.','San Estanislao de Kostka'],
   ['¡Oh almas criadas para estas grandezas y para ellas llamadas!, ¿qué hacéis?, ¿en qué os entretenéis?','San Juan de la Cruz, Cántico espiritual, canción 39, 7'],
   ['Abre tu boca y yo la llenaré.','Salmo 80, 11'],

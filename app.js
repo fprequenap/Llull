@@ -84,6 +84,8 @@ function vistaHoy(){
   if (disc.ayuno) marcas.push('<span class="tag" style="color:#9E1F17">Ayuno</span>');
   if (disc.abstinencia) marcas.push('<span class="tag" style="color:#9E1F17">Abstinencia</span>');
   if (marcas.length) s += `<div style="margin:4px 0 10px">${marcas.join(' ')}</div>`;
+  s += `<div class="card" id="brevDia" data-f="${h}" style="padding:10px 14px"><span class="peq">Breviario Romano…</span></div>`;
+  s += tarjetaAniversario();
   if (S.ultimaCopia == null || difDias(S.ultimaCopia, h) > 30) s += `<div class="aviso">Haz una copia de seguridad de tu progreso: si pierdes o cambias el teléfono, se pierde. <a href="#" data-a="sub" data-t="mas" data-v="copia">Hacer copia</a></div>`;
   if (S.cartaInicial && medicionPendiente() && ['orden','escudero','aspirante','expulsado'].includes(S.situacion)) s += `<div class="aviso">Toca la medición mensual de tus balanzas. <a href="#" data-a="abrirCarta">Medirme ahora</a></div>`;
   s += tarjetaSituacion();
@@ -155,7 +157,7 @@ function tarjetaSituacion(){
       const listo = penitenciaCumplida() && (!S.proximoExamen || S.proximoExamen <= hoy());
       return `<div class="card negra"><h2>${fem()?'Expulsada':'Expulsado'} de la Orden</h2>
         <p>La redención es siempre posible: confesión, penitencia de días superados y nuevo examen. Tus armas se guardan abatidas y te serán restituidas al ser ${fem()?'armada':'armado'} de nuevo.</p>
-        <label class="fila"><input type="checkbox" data-a="confPen" ${P.confesion?'checked':''} style="width:24px;height:24px"> Me he confesado</label>
+        <label class="fila"><input type="checkbox" data-a="confPen" ${P.confesion?'checked':''} style="width:24px;height:24px"> Me he confesado</label> <a href="#" data-a="sub" data-t="mas" data-v="confesion">Preparar la confesión</a>
         <div class="barra" style="margin-top:8px"><i style="width:${Math.min(100,P.dias/P.req*100)}%"></i></div>
         <p class="peq">Penitencia: ${P.dias} de ${P.req} días superados</p>
         ${listo ? '<button class="btn" data-a="sub" data-t="hoy" data-v="examen">Examen de reingreso</button>' : ''}</div>`;
@@ -211,7 +213,7 @@ function tarjetaDia(h, disc){
   s += '</div>';
   if (disc.ayuno || disc.abstinencia || disc.fiesta) s += `<div class="card"><h2>La mesa de hoy</h2><p>${disc.ayuno?esc(NUTRICION.ayuno)+' ':''}${disc.abstinencia?esc(NUTRICION.abstinencia)+' ':''}${disc.fiesta&&!disc.ayuno?esc(NUTRICION.fiesta):''}</p><p class="peq">${esc(disc.motivo)}</p></div>`;
   // examen
-  if (!d.cerrado) s += `<div class="card"><h2>Examen de la noche</h2><p>Antes de dormir, examina el día y declara qué pruebas superaste.</p><button class="btn ancho osc" data-a="examenNoche" data-v="${h}">Hacer el examen</button></div>`;
+  if (!d.cerrado) s += `<div class="card"><h2>Examen de la noche</h2><p>Antes de dormir, examina el día y declara qué pruebas superaste. <a href="${enlaceHora(h,'C')}" target="_blank" rel="noopener">Rezar Completas</a></p><button class="btn ancho osc" data-a="examenNoche" data-v="${h}">Hacer el examen</button></div>`;
   else s += `<div class="card ${d.superado?'oro':'negra'}"><h2>Día ${d.superado?'superado':'no superado'}</h2><p>Honra ganada: ${d.honra}${d.opcionales.length&&d.superado?` (×${multiplicador(d).toFixed(2)})`:''}</p></div>`;
   return s;
 }
@@ -543,6 +545,7 @@ function vistaInvestidura(){
       else if (p.id === 'armas') accion = S.blason ? `<p>Tus armas, abatidas por tu caída, te son restituidas.</p><div class="logro">${logroSVG(S.blason,1,null)}</div><button class="btn" data-a="pasoInv" data-v="armas">Recibir mis armas</button>` : `<button class="btn" data-a="sub" data-t="armas" data-v="constructor">Componer mis armas</button>`;
       else if (p.id === 'mostrarse') accion = `${retratoURL() ? '' : '<p class="peq">Si añades tu retrato en Más › Ajustes, aparecerá en la lámina.</p>'}<div class="fila"><button class="btn" data-a="laminaInvestidura">Compartir la lámina de investidura</button><button class="btn sec" data-a="compartir">Solo mis armas</button><button class="btn sec" data-a="pasoInv" data-v="mostrarse">Hecho</button></div>`;
       else if (p.id === 'dadivas') accion = `<label class="campo"><span>¿Qué dádiva has repartido?</span><input type="text" id="dadiva" maxlength="120"></label><button class="btn" data-a="dadiva">Anotar y terminar</button>`;
+      else if (p.id === 'confesion') accion = `<div class="fila"><button class="btn sec" data-a="sub" data-t="mas" data-v="confesion">Preparar la confesión</button><button class="btn sec" data-a="pasoInv" data-v="confesion">Hecho</button></div>`;
       else accion = `<button class="btn sec" data-a="pasoInv" data-v="${p.id}">Hecho</button>`;
     }
     s += `<div class="card ${hecho?'oro':''}" style="${hab||hecho?'':'opacity:.55'}"><span class="tag">${p.dia===-1?'Vigilia':'Día de la fiesta'}</span>
@@ -677,6 +680,7 @@ function vistaConstructor(){
    ===================================================================== */
 function vistaOrden(){
   if (RUTA.sub === 'reglas') return vistaReglas();
+  if (RUTA.sub === 'cronica') return vistaCronica();
   if (!S.perfil) return `<p>Preséntate primero al examen.</p>`;
   const e = edad();
   let s = `<h1>La Orden</h1>` + tarjetaCombate() + tarjetaEvolucion() + tarjetaPadrino() + `<div class="card oro"><h2>${esc(nombreGrado())}</h2>
@@ -698,7 +702,7 @@ function vistaOrden(){
     s += '</div>';
   }
   s += `<div class="card"><h2>Historial de honra y deshonra</h2>${S.historial.length?S.historial.slice(0,60).map(h=>`<p class="${h.tipo==='deshonor'?'rub':''}"><span class="peq">${deISO(h.fecha).toLocaleDateString('es-ES')}</span> · ${esc(h.evento)}</p>`).join(''):'<p class="peq">Sin anotaciones.</p>'}</div>
-    <button class="btn sec ancho" data-a="sub" data-t="orden" data-v="reglas">Las reglas de la Orden</button>`;
+    <div class="fila"><button class="btn sec" data-a="sub" data-t="orden" data-v="cronica">Mi crónica</button>${S.situacion==='orden'?'<button class="btn sec" data-a="laminaAnual">Lámina del año</button>':''}<button class="btn sec" data-a="sub" data-t="orden" data-v="reglas">Las reglas de la Orden</button></div>`;
   return s;
 }
 function vistaReglas(){
@@ -723,13 +727,14 @@ function vistaReglas(){
    ===================================================================== */
 function vistaMas(){
   const sub = RUTA.sub;
-  const V = { ejercicios:vistaEjercicios, nutricion:vistaNutricion, calendario:vistaCalendario, virtudes:vistaVirtudes, avisos:vistaAvisos, copia:vistaCopia, ajustes:vistaAjustes, acerca:vistaAcerca }[sub];
+  const V = { ejercicios:vistaEjercicios, nutricion:vistaNutricion, calendario:vistaCalendario, virtudes:vistaVirtudes, confesion:vistaConfesion, avisos:vistaAvisos, copia:vistaCopia, ajustes:vistaAjustes, acerca:vistaAcerca }[sub];
   if (V) return `<button class="btn sec" data-a="tab" data-v="mas">‹ Más</button>` + V();
   return `<h1>Más</h1><div class="card lista">
     <a href="#" data-a="sub" data-t="mas" data-v="ejercicios"><b>Ejercicios</b><br><span class="peq">Rutinas para mantener la forma, según tu edad y tu grado</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="nutricion"><b>Nutrición</b><br><span class="peq">La templanza en la mesa (VI, §§9, 16)</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="calendario"><b>Calendario</b><br><span class="peq">Fiestas de precepto, ayunos y abstinencias</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="virtudes"><b>Virtudes y vicios</b><br><span class="peq">Parte VI</span></a>
+    <a href="#" data-a="sub" data-t="mas" data-v="confesion"><b>Preparar la confesión</b><br><span class="peq">Mandamientos, pecados y deberes del oficio (IV, §1)</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="avisos"><b>Avisos diarios</b><br><span class="peq">Mañana y noche en el calendario del teléfono</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="copia"><b>Copia de seguridad</b></a>
     <a href="#" data-a="sub" data-t="mas" data-v="ajustes"><b>Ajustes</b></a>
@@ -792,6 +797,7 @@ function vistaCopia(){
   return `<h1>Copia de seguridad</h1><p>Tu progreso se guarda solo en este dispositivo. Descarga una copia y guárdala fuera del teléfono; para restaurarla, cárgala aquí.</p>
     <div class="card"><button class="btn ancho" data-a="exportar">Descargar copia</button>
     <p class="peq">Última copia: ${S.ultimaCopia ? deISO(S.ultimaCopia).toLocaleDateString('es-ES') : 'nunca'}</p>
+    <p class="peq">Almacenamiento protegido frente a borrados del sistema: <b>${S.persistente ? 'sí' : 'no concedido'}</b>${S.persistente ? '' : ' (instala la app desde el navegador para que el teléfono lo conceda)'}.</p>
     <label class="campo"><span>Restaurar desde una copia</span><input type="file" id="fimp" accept="application/json,.json"></label></div>`;
 }
 function vistaAjustes(){
@@ -924,6 +930,11 @@ const ACC = {
   borrarRetrato: () => { if (!TMP.borrarRet) { TMP.borrarRet = true; toast('Pulsa otra vez para quitar el retrato.'); return; } TMP.borrarRet = false; delete S.perfil.retrato; guardar(); render(); },
   laminaInvestidura: () => compartirLamina({ titulo: fem() ? 'Armada dama de la Orden' : 'Armado caballero de la Orden', grado: edad() >= EDAD_CONDE ? 4 : 1, fiesta: S.investidura.nombre, fecha: S.investidura.fecha }),
   laminaGrado: () => compartirLamina({ titulo: 'Grado en la Orden de Caballería', grado: S.grado, fiesta: null, fecha: hoy() }),
+  renovar: () => { renovarJuramento(); render(); toast('Juramento renovado. +100 de honra.'); },
+  laminaAnual: async () => { try { const b = await laminaAnualPNG(); await compartirBlob(b, 'lamina-del-ano.png', 'Un año en la Orden'); } catch(e){ toast('No se pudo generar la lámina.'); } },
+  leerCronica: () => leerEnVoz(cronicaTexto().map(p => ({ t:p.t, lengua:'es' }))),
+  descargarCronica: () => { const t = cronicaTexto().map(p => p.h ? `\n${p.t.toUpperCase()}\n` : p.t).join('\n\n'); compartirBlob(new Blob([t], { type:'text/plain;charset=utf-8' }), 'cronica.txt', 'Crónica'); },
+  meConfese: () => { marcarConfesion(); toast('Que Dios te bendiga.'); go(S.situacion === 'aspirante' && S.investidura ? 'hoy' : 'hoy', S.situacion === 'aspirante' && S.investidura ? 'investidura' : null); },
   finIngreso: () => { TMP.resIngreso = null; go('hoy'); },
   fiesta: el => { const F = proximasFiestas(new Date(), 6); señalarFiesta(F[+el.dataset.v]); render(); },
   cambiarFiesta: () => { S.investidura = null; guardar(); render(); },
@@ -1054,7 +1065,7 @@ document.addEventListener('change', e => {
   }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'qbus') ACC.buscar(); if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('cita')) abrirCita(e.target.dataset.cit); });
-function despuesDeRender(){ enlazarCitas($('#app')); }
+function despuesDeRender(){ enlazarCitas($('#app')); rellenarBreviario(); }
 
 /* ---------- citas del Libro: toda referencia (Parte, §) abre el parágrafo ---------- */
 const ROMANOS = { I:1, II:2, III:3, IV:4, V:5, VI:6, VII:7 };
@@ -1122,8 +1133,10 @@ cerrarDiasAtrasados();
 comprobarAcidia();
 render();
 splash();
+asegurarPersistencia();
+avisoCopiaAlAbrir();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=14').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=15').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;

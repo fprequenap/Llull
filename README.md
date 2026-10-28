@@ -182,6 +182,15 @@ En Más › Ajustes se puede añadir una foto del rostro: se encuadra con el ded
 - **Lámina de investidura:** imagen para compartir el día de la investidura (IV, §12), con el retrato, las armas, el grado, la fiesta, la fecha, el padrino y el blasonado. En Mis armas, «Lámina de mi grado» genera la del grado actual.
 - Los estados de caída y deshonor nunca se aplican al rostro: solo a las armas.
 
+## La vida en la Orden
+
+- **Datos protegidos:** al abrir, la app pide al navegador que no borre sus datos aunque falte espacio (más fiable con la app instalada; el estado se ve en Copia de seguridad). Si la última copia tiene más de 30 días, avisa al abrir, una vez al día.
+- **Breviario Romano de 1962:** en Hoy aparece el día litúrgico según el Breviario (por ejemplo, «Santos Simón y Judas, Apóstoles · II clase»), con enlaces a Laudes y a Completas; el examen de la noche enlaza también con Completas. Los datos se leen de la app del Breviario, en el mismo sitio web, y quedan guardados para usarlos sin conexión.
+- **Aniversario de la investidura:** durante la semana del aniversario, Hoy propone una vela breve (IV, §§11–12) y la renovación del juramento (+100 de honra).
+- **Lámina del año:** grado, cercanía a la Orden, balanzas en el fiel, días y pruebas superados, honra ganada y hechos señalados del último año, con el retrato y las armas. En el aniversario y en Orden.
+- **Mi crónica:** el historial contado como crónica, año por año, con los grandes deseos ofrecidos; se puede escuchar y descargar. Las faltas graves figuran solo como «falta grave», sin detalle.
+- **Preparar la confesión:** examen por los diez mandamientos (IV, §6), los siete pecados capitales (VI, §§9–15) y los deberes del oficio (Parte II), con las balanzas que señalan frentes abiertos y el acto de contrición. Nada de lo que se marca se guarda. Enlazado desde la vigilia de la investidura y desde la penitencia.
+
 ## El deseo
 
 No se trata de apagar el deseo, sino de cambiar lo que se desea: no conformarse con poco cuando se puede alcanzar el Cielo. Cada mañana, la tarjeta *Sursum corda* propone una aspiración de la Escritura o de los santos y pide formular «mi gran deseo de hoy». Cada noche, la primera pregunta es si uno se dejó gobernar por el Espíritu Santo o por sus gustos. *Ad maiora natus sum* (San Estanislao de Kostka).
@@ -328,6 +337,7 @@ El blasón aparece al abrir la aplicación y en *Mis armas*, y puede compartirse
 | `blason.js` | Heráldica: dibujo SVG, regla de esmaltes y blasonado |
 | `arnes.js` | Mi arnés: el escudero y el caballero armado, con el estado de cada pieza |
 | `retrato.js` | Mi retrato: recorte, medallón y lámina de investidura |
+| `cronica.js` | Protección de datos, Breviario, aniversario, lámina del año, crónica y confesión |
 | `data.js` | Texto íntegro del Libro y las 365 divisas |
 | `sw.js` | Service worker: funcionamiento sin conexión y actualización |
 | `llull.webmanifest` | Manifiesto de la PWA |
