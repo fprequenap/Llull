@@ -576,6 +576,13 @@ function vistaLibro(){
     <div class="fila" style="margin:10px 0"><input type="text" id="qbus" placeholder="Buscar en el Libro" style="flex:1" value="${esc(TMP.q||'')}"><button class="btn sec" data-a="buscar">Buscar</button></div>
     <div class="card lista">${SECCIONES.map(([k,n])=>`<a href="#" data-a="leer" data-v="${k}">${k.startsWith('parte')?'<b>':''}${esc(n)}${k.startsWith('parte')?'</b>':''}</a>`).join('')}</div>`;
 }
+/* El original lleva también su capitular iluminada (la de su propia inicial, que no siempre coincide con la del español) */
+const CAPITULARES = ['A','D','E','F','O','P','S','T'];
+function lemTexto(x){
+  const L = (x.lem || '').charAt(0);
+  if (x.cap && CAPITULARES.includes(L)) return `<img class="cap" src="cap-${L}.png" alt="${esc(L)}">` + esc(x.lem.slice(1).replace(/^\s+/, ''));
+  return esc(x.lem);
+}
 function parrafoTexto(x){
   let es = esc(x.es);
   if (x.cap) es = `<img class="cap" src="${x.cap}" alt="${esc(x.es[0])}">` + es.slice(1);
@@ -593,7 +600,7 @@ function vistaLeer(k){
     if (P.invocacion) s += `<div class="par"><div class="lem rub">${esc(P.invocacion.lem)}</div><div class="es rub"><i>${esc(P.invocacion.es)}</i></div></div>`;
     s += `<div class="titlem">${esc(P.tituloLem||'')}</div><div class="tit">${esc(P.nombre)}${P.id?'. '+esc(P.titulo):''}</div>${banda()}`;
     if (vozDisponible()) s += `<div class="fila" style="justify-content:center;margin-bottom:6px">${selectorVoz()}<button class="btn sec" data-a="vozPars" data-p="${P.id}" data-n="">Escuchar esta parte</button><button class="btn sec" data-a="vozParar">Parar</button></div>`;
-    for (const x of P.pars) s += `<div class="par" id="p-${P.id}-${x.n}"><div class="lem">${esc(x.lem)}</div><div class="es">${x.n>1||P.id===0&&!x.cap?`<span class="num">${x.n}.</span>`:''}${parrafoTexto(x)}${vozDisponible()?` <a href="#" class="peq" data-a="vozPars" data-p="${P.id}" data-n="${x.n}" aria-label="Escuchar el parágrafo ${x.n}">▶ escuchar</a>`:''}</div></div>`;
+    for (const x of P.pars) s += `<div class="par" id="p-${P.id}-${x.n}"><div class="lem">${lemTexto(x)}</div><div class="es">${x.n>1||P.id===0&&!x.cap?`<span class="num">${x.n}.</span>`:''}${parrafoTexto(x)}${vozDisponible()?` <a href="#" class="peq" data-a="vozPars" data-p="${P.id}" data-n="${x.n}" aria-label="Escuchar el parágrafo ${x.n}">▶ escuchar</a>`:''}</div></div>`;
     s += '</div>';
     const ant = P.id>0 ? `<button class="btn sec" data-a="leer" data-v="parte${P.id-1}">‹ ${esc(LIBRO.partes[P.id-1].nombre)}</button>` : '';
     const sig = P.id<7 ? `<button class="btn sec" data-a="leer" data-v="parte${P.id+1}">${esc(LIBRO.partes[P.id+1].nombre)} ›</button>` : '';
@@ -1100,7 +1107,7 @@ function abrirCita(cit){
   c.innerHTML = `<div class="hoja"><div class="fila" style="justify-content:space-between;margin-bottom:6px">
       <button class="btn" data-a="cerrarCita">‹ Volver</button>${vozDisponible()?`<button class="btn sec" data-a="vozPars" data-p="${p}" data-n="${nums.join(',')}">Escuchar</button>`:''}</div>${vozDisponible()?`<div class="fila" style="margin-bottom:6px">${selectorVoz()}`:'<div>'}<button class="btn sec" data-a="citaLibro" data-p="${p}" data-n="${pars.length?pars[0].n:1}">Abrir en el Libro</button></div>
     <h2>${esc(P.nombre)}${P.id?'. '+esc(P.titulo):''}</h2>
-    <div class="lector ${cls}">${pars.map(x=>`<div class="par"><div class="lem">${esc(x.lem)}</div><div class="es"><span class="num">§${x.n}.</span> ${parrafoTexto(x)}</div></div>`).join('')}</div>
+    <div class="lector ${cls}">${pars.map(x=>`<div class="par"><div class="lem">${lemTexto(x)}</div><div class="es"><span class="num">§${x.n}.</span> ${parrafoTexto(x)}</div></div>`).join('')}</div>
     <div class="fila" style="margin-top:12px"><button class="btn ancho" data-a="cerrarCita">‹ Volver</button></div></div>`;
   c.addEventListener('click', e => { if (e.target === c) cerrarCita(); });
   document.body.appendChild(c);
@@ -1116,7 +1123,7 @@ comprobarAcidia();
 render();
 splash();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=13').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=14').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;
