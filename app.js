@@ -11,7 +11,7 @@ let TMP = {};               // estado efímero de la interfaz
 let ENSAYO = false;
 
 function hoy(){ return hoyISO(); }
-function go(tab, sub, arg){ RUTA = { tab, sub:sub||null, arg:arg||null }; render(); window.scrollTo(0,0); }
+function go(tab, sub, arg){ if (!(tab==='libro' && sub==='leer')) TMP.volver = null; RUTA = { tab, sub:sub||null, arg:arg||null }; render(); window.scrollTo(0,0); }
 function toast(t, ms){ const d = document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(), ms||2600); }
 
 /* Días abiertos de hace más de un día: se cierran sin examen; las pruebas sin resolver cuentan como no superadas */
@@ -218,7 +218,7 @@ function pendienteAyer(){
 }
 
 /* ---------- examen de la noche ---------- */
-function modal(html){ cerrarModal(); const m = document.createElement('div'); m.className='modal'; m.id='modal'; m.innerHTML = `<div class="hoja">${html}</div>`; m.addEventListener('click', e => { if (e.target === m) cerrarModal(); }); document.body.appendChild(m); }
+function modal(html){ cerrarModal(); const m = document.createElement('div'); m.className='modal'; m.id='modal'; m.innerHTML = `<div class="hoja">${html}</div>`; m.addEventListener('click', e => { if (e.target === m) cerrarModal(); }); document.body.appendChild(m); enlazarCitas(m); }
 function cerrarModal(){ const m = $('#modal'); if (m) m.remove(); }
 function abrirExamenNoche(fecha){
   const d = S.dias[fecha]; if (!d) return;
@@ -354,9 +354,9 @@ function parrafoTexto(x){
 function vistaLeer(k){
   const col = S.ajustes.columnas || 'ambas';
   const cls = col === 'es' ? 'es' : col === 'lem' ? 'lem' : '';
-  const nav = `<div class="fila" style="margin-bottom:8px"><button class="btn sec" data-a="tab" data-v="libro">Índice</button>
+  const nav = `<div class="fila" style="margin-bottom:8px">${TMP.volver?'<button class="btn" data-a="volverCita">‹ Volver</button>':''}<button class="btn sec" data-a="tab" data-v="libro">Índice</button>
     <select data-a="cols" style="width:auto;flex:1"><option value="ambas" ${col==='ambas'?'selected':''}>Lemosín y español</option><option value="es" ${col==='es'?'selected':''}>Solo español</option><option value="lem" ${col==='lem'?'selected':''}>Solo lemosín</option></select></div>`;
-  let s = nav;
+  let s = nav + (TMP.volver ? '<button class="btn volverflot" data-a="volverCita">‹ Volver</button>' : '');
   if (k.startsWith('parte')) {
     const P = LIBRO.partes[+k.slice(5)];
     s += `<div class="lector ${cls}">`;
@@ -703,6 +703,18 @@ const ACC = {
   },
   /* lector */
   leer: el => go('libro', 'leer', el.dataset.v),
+  cita: el => abrirCita(el.dataset.cit),
+  cerrarCita: () => cerrarCita(),
+  citaLibro: el => {
+    TMP.volver = { ruta: { ...RUTA }, y: window.scrollY, modal: !!document.getElementById('modal') };
+    cerrarCita(); cerrarModal();
+    ACC.leerPar(el);
+  },
+  volverCita: () => {
+    const V = TMP.volver; TMP.volver = null; if (!V) return;
+    RUTA = V.ruta; render(); window.scrollTo(0, V.y);
+    if (V.modal && RUTA.tab === 'hoy' && TMP.noche) abrirExamenNoche(TMP.noche.fecha);
+  },
   leerPar: el => { go('libro', 'leer', 'parte' + el.dataset.p); setTimeout(() => { const t = document.getElementById(`p-${el.dataset.p}-${el.dataset.n}`); if (t) { t.scrollIntoView({ block:'start' }); window.scrollBy(0,-70); t.style.background = '#FFF3D6'; } }, 50); },
   buscar: () => { TMP.q = $('#qbus').value; go('libro', 'buscar'); },
   /* orden */
@@ -766,8 +778,66 @@ document.addEventListener('change', e => {
     r.readAsText(el.files[0]);
   }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'qbus') ACC.buscar(); });
-function despuesDeRender(){}
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'qbus') ACC.buscar(); if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('cita')) abrirCita(e.target.dataset.cit); });
+function despuesDeRender(){ enlazarCitas($('#app')); }
+
+/* ---------- citas del Libro: toda referencia (Parte, §) abre el parágrafo ---------- */
+const ROMANOS = { I:1, II:2, III:3, IV:4, V:5, VI:6, VII:7 };
+const RE_CITA = /(Prólogo, §§?\s?|\b(?:Parte )?(VII|VI|IV|V|III|II|I), §§?\s?)(\d+(?:\s?[–-]\s?\d+)?(?:,\s?\d+(?:\s?[–-]\s?\d+)?)*)/g;
+function parseNums(t){
+  const L = [];
+  for (const trozo of t.split(',')) {
+    const m = trozo.trim().match(/^(\d+)(?:\s?[–-]\s?(\d+))?$/); if (!m) continue;
+    const a = +m[1], b = m[2] ? +m[2] : a;
+    for (let i = a; i <= b && i < a + 40; i++) L.push(i);
+  }
+  return L;
+}
+function enlazarCitas(root){
+  if (!root) return;
+  // referencias marcadas: <span class="ref">III, §2</span>, «Prólogo»
+  root.querySelectorAll('.ref').forEach(el => {
+    if (el.closest('a,button') || el.dataset.cit) return;
+    const t = el.textContent.trim();
+    if (t === 'Prólogo') { el.dataset.cit = '0:'; el.classList.add('cita'); el.dataset.a = 'cita'; }
+  });
+  // cualquier texto con la forma «III, §2», «Parte VI, §9», «IV, §§5–7», «VI, §§3, 8»
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n =>
+    (!n.parentElement || n.parentElement.closest('a,button,input,textarea,select,option,.cita,.lector,svg')) ? NodeFilter.FILTER_REJECT :
+    (RE_CITA.test(n.nodeValue) ? (RE_CITA.lastIndex = 0, NodeFilter.FILTER_ACCEPT) : NodeFilter.FILTER_REJECT) });
+  const nodos = []; while (w.nextNode()) nodos.push(w.currentNode);
+  for (const n of nodos) {
+    const txt = n.nodeValue, frag = document.createDocumentFragment(); let ult = 0, m;
+    RE_CITA.lastIndex = 0;
+    while ((m = RE_CITA.exec(txt))) {
+      const parte = m[2] ? ROMANOS[m[2]] : 0, nums = parseNums(m[3]);
+      if (!nums.length || !LIBRO.partes[parte]) continue;
+      frag.appendChild(document.createTextNode(txt.slice(ult, m.index)));
+      const a = document.createElement('span');
+      a.className = 'cita'; a.dataset.a = 'cita'; a.dataset.cit = `${parte}:${nums.join(',')}`; a.setAttribute('role','link'); a.tabIndex = 0;
+      a.textContent = m[0]; frag.appendChild(a); ult = m.index + m[0].length;
+    }
+    if (ult === 0) continue;
+    frag.appendChild(document.createTextNode(txt.slice(ult)));
+    n.parentNode.replaceChild(frag, n);
+  }
+}
+function abrirCita(cit){
+  const [p, ns] = cit.split(':'); const P = LIBRO.partes[+p];
+  const nums = ns ? ns.split(',').map(Number) : P.pars.map(x => x.n);
+  const col = S.ajustes.columnas || 'ambas', cls = col === 'es' ? 'es' : col === 'lem' ? 'lem' : '';
+  const pars = nums.map(n => P.pars.find(x => x.n === n)).filter(Boolean);
+  cerrarCita();
+  const c = document.createElement('div'); c.className = 'modal'; c.id = 'cita'; c.style.zIndex = 65;
+  c.innerHTML = `<div class="hoja"><div class="fila" style="justify-content:space-between;margin-bottom:6px">
+      <button class="btn" data-a="cerrarCita">‹ Volver</button><button class="btn sec" data-a="citaLibro" data-p="${p}" data-n="${pars.length?pars[0].n:1}">Abrir en el Libro</button></div>
+    <h2>${esc(P.nombre)}${P.id?'. '+esc(P.titulo):''}</h2>
+    <div class="lector ${cls}">${pars.map(x=>`<div class="par"><div class="lem">${esc(x.lem)}</div><div class="es"><span class="num">§${x.n}.</span> ${parrafoTexto(x)}</div></div>`).join('')}</div>
+    <div class="fila" style="margin-top:12px"><button class="btn ancho" data-a="cerrarCita">‹ Volver</button></div></div>`;
+  c.addEventListener('click', e => { if (e.target === c) cerrarCita(); });
+  document.body.appendChild(c);
+}
+function cerrarCita(){ const c = document.getElementById('cita'); if (c) c.remove(); }
 
 /* ---------- arranque (al final: todas las constantes ya definidas) ---------- */
 cargar();
@@ -778,7 +848,7 @@ comprobarAcidia();
 render();
 splash();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=5').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=6').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;
