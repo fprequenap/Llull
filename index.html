@@ -62,6 +62,10 @@ main{max-width:760px;margin:0 auto;padding:14px 16px 24px}
 .divisa.sin::first-letter{font-size:inherit;float:none;padding:0;color:inherit;font-weight:inherit}
 .ref{font-size:.82em;color:var(--rojo);letter-spacing:.3px}
 .volverflot{position:fixed;left:16px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:35;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+details.plegable>summary{cursor:pointer;font-weight:600;color:var(--rojo);font-size:1.1em;list-style:none}
+details.plegable>summary::-webkit-details-marker{display:none}
+details.plegable>summary::before{content:"▸ ";color:var(--oro)}
+details.plegable[open]>summary::before{content:"▾ "}
 .pz:hover,.pz:active{filter:brightness(1.12)}
 .cita{color:var(--rojo);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;cursor:pointer}
 .prueba{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px dashed var(--linea)}

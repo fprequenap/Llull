@@ -94,6 +94,21 @@ function medallonSVG(tam){
     <circle cx="100" cy="100" r="78" fill="none" stroke="#1B1A1A" stroke-width="2.5"/></svg>`;
 }
 
+/* Medallón dibujado directamente en el lienzo (Safari no siempre pinta imágenes anidadas en un SVG) */
+async function dibujarMedallon(x, cx, cy, R){
+  const u = retratoURL(); if (!u) return;
+  const img = await cargarImagen(u);
+  x.save();
+  x.fillStyle = '#9E1F17'; x.beginPath(); x.arc(cx, cy, R, 0, Math.PI*2); x.fill();
+  x.fillStyle = '#D9A21B'; x.beginPath(); x.arc(cx, cy, R*0.87, 0, Math.PI*2); x.fill();
+  x.strokeStyle = '#1B1A1A'; x.lineWidth = R*0.015; x.stroke();
+  for (let i = 0; i < 24; i++) { const a = i/24*Math.PI*2; x.fillStyle = '#F3E3A8'; x.beginPath(); x.arc(cx + R*0.93*Math.cos(a), cy + R*0.93*Math.sin(a), R*0.026, 0, Math.PI*2); x.fill(); }
+  x.beginPath(); x.arc(cx, cy, R*0.79, 0, Math.PI*2); x.closePath(); x.save(); x.clip();
+  x.drawImage(img, cx - R*0.79, cy - R*0.79, R*1.58, R*1.58); x.restore();
+  x.strokeStyle = '#1B1A1A'; x.lineWidth = R*0.025; x.beginPath(); x.arc(cx, cy, R*0.79, 0, Math.PI*2); x.stroke();
+  x.restore();
+}
+
 /* ---------- Lámina de investidura y de grado (imagen para compartir: IV, §12) ---------- */
 function cargarImagen(src){ return new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = src; }); }
 async function laminaPNG(opc){
@@ -116,8 +131,7 @@ async function laminaPNG(opc){
   const svgArmas = logroSVG(S.blason, opc.grado, null);
   const armas = await cargarImagen('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgArmas));
   if (u) {
-    const med = await cargarImagen('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(medallonSVG(360).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ')));
-    x.drawImage(med, 120, 450, 360, 360);
+    await dibujarMedallon(x, 300, 630, 180);
     x.drawImage(armas, 560, 420, 400, 520);
   } else x.drawImage(armas, (W-440)/2, 420, 440, 572);
   // nombre y grado
@@ -129,8 +143,8 @@ async function laminaPNG(opc){
   centro(deISO(opc.fecha).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' }), y, '36px "EB Garamond", Georgia, serif', '#3A2F27'); y += 46;
   if (S.perfil.padrino) { centro(`Padrino: ${S.perfil.padrino}`, y, 'italic 36px "EB Garamond", Georgia, serif', '#3A2F27'); y += 46; }
   if (S.blason) { y = envolver(blasonar(S.blason), y + 6, 'italic 26px "EB Garamond", Georgia, serif', '#6B5E4B', W - 280, 32) + 56; }
-  y = envolver('«…para que todos sepan que es caballero y que está obligado a sostener y defender el honor de la Caballería.» (IV, §12)', Math.max(y, H - 260), '28px "EB Garamond", Georgia, serif', '#9E1F17', W - 260, 36);
-  centro('AMDG', Math.min(Math.max(y + 60, H - 150), H - 105), '40px UnifrakturMaguntia', '#9E1F17');
+  y = envolver('«…para que todos sepan que es caballero y que está obligado a sostener y defender el honor de la Caballería.» (IV, §12)', Math.max(y, H - 300), '28px "EB Garamond", Georgia, serif', '#9E1F17', W - 260, 36);
+  centro('AMDG', Math.min(Math.max(y + 85, H - 140), H - 100), '40px UnifrakturMaguntia', '#9E1F17');
   return new Promise((ok, ko) => c.toBlob(b => b ? ok(b) : ko(new Error('png')), 'image/png'));
 }
 async function compartirLamina(opc){

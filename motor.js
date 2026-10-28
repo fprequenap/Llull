@@ -53,6 +53,7 @@ function cargar(){
   const base = estadoNuevo();
   for (const k in base) if (S[k] === undefined) S[k] = base[k];
   // migración aditiva: la evolución arranca con las mediciones ya hechas (no se borra nada)
+  compactarDias();
   if (!S.serie.length && (S.mediciones||[]).length) S.serie = S.mediciones.map(m => ({ f:m.fecha, c:cercania(m.bal), b:{ ...m.bal }, m:1 }));
   return S;
 }
@@ -522,4 +523,22 @@ function apuntarSerie(fecha){
   if (i >= 0) S.serie[i] = { ...S.serie[i], ...p }; else S.serie.push(p);
   S.serie.sort((a,b) => a.f < b.f ? -1 : 1);
   if (S.serie.length > 800) S.serie.splice(0, S.serie.length - 800);
+}
+
+
+/* ---------- compactación: los días de hace más de 400 se quedan en su resumen (no se pierde la cuenta) ---------- */
+const DIAS_DETALLE = 400;
+function compactarDias(){
+  const h = hoyISO();
+  for (const [f, d] of Object.entries(S.dias)) {
+    if (d && !d.resumen && difDias(f, h) > DIAS_DETALLE && d.cerrado) {
+      S.dias[f] = { resumen:true, cerrado:true, superado:!!d.superado, honra:d.honra||0, ejercicio:!!d.ejercicio,
+        pruebas:[], opcionales:[], deseo:d.deseo || undefined, animo:d.animo };
+    }
+  }
+  if (S.serie && S.serie.length > 400) {
+    // fuera de los últimos 400 días se conserva un punto por semana y todas las mediciones
+    const corte = S.serie.length - 400;
+    S.serie = S.serie.filter((p, i) => i >= corte || p.m || (deISO(p.f).getDay() === 0));
+  }
 }

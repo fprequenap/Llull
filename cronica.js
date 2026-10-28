@@ -40,6 +40,8 @@ async function rellenarBreviario(){
   const el = document.getElementById('brevDia'); if (!el) return;
   const f = el.dataset.f, d = await diaBreviario(f);
   if (!d) { el.remove(); return; }
+  // precarga del mes siguiente, para no quedarse sin datos al cambiar de mes sin conexión
+  { const n = deISO(f); n.setMonth(n.getMonth() + 1, 1); diaBreviario(hoyISO(n)); }
   el.innerHTML = `<b>${esc(d.nombre)}</b>${d.clase ? ` <span class="peq">· ${esc(d.clase)}</span>` : ''}<br><span class="peq"><i>${esc(d.latin)}</i></span>
     <div class="fila" style="margin-top:6px"><a class="btn sec" href="${enlaceHora(f,'L')}" target="_blank" rel="noopener">Laudes</a><a class="btn sec" href="${enlaceHora(f,'C')}" target="_blank" rel="noopener">Completas</a></div>`;
 }
@@ -93,7 +95,7 @@ async function laminaAnualPNG(){
   centro(A ? `${A.anos}.º año en la Orden` : 'Un año en la Orden', 225, 'italic 42px "EB Garamond", Georgia, serif', '#3A2F27');
   const u = retratoURL();
   const armas = await cargarImagen('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(logroSVG(S.blason, S.grado, null)));
-  if (u) { const med = await cargarImagen('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(medallonSVG(300).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '))); x.drawImage(med, 150, 280, 300, 300); x.drawImage(armas, 600, 260, 320, 416); }
+  if (u) { await dibujarMedallon(x, 300, 430, 150); x.drawImage(armas, 600, 260, 320, 416); }
   else x.drawImage(armas, (W-340)/2, 260, 340, 442);
   centro(S.perfil.nombre, 760, '600 56px "EB Garamond", Georgia, serif', '#1B1A1A');
   centro(nombreGrado(), 828, '52px UnifrakturMaguntia', '#9E1F17');

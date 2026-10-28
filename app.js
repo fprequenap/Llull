@@ -89,7 +89,6 @@ function vistaHoy(){
   if (S.ultimaCopia == null || difDias(S.ultimaCopia, h) > 30) s += `<div class="aviso">Haz una copia de seguridad de tu progreso: si pierdes o cambias el teléfono, se pierde. <a href="#" data-a="sub" data-t="mas" data-v="copia">Hacer copia</a></div>`;
   if (S.cartaInicial && medicionPendiente() && ['orden','escudero','aspirante','expulsado'].includes(S.situacion)) s += `<div class="aviso">Toca la medición mensual de tus balanzas. <a href="#" data-a="abrirCarta">Medirme ahora</a></div>`;
   s += tarjetaSituacion();
-  if (['escudero','aspirante','orden','expulsado'].includes(S.situacion)) s += tarjetaArnes(true);
   if (['escudero','aspirante','orden','expulsado'].includes(S.situacion)) s += tarjetaDia(h, disc);
   return s;
 }
@@ -128,7 +127,7 @@ function tarjetaSituacion(){
     case 'escudero': {
       const pct = Math.min(100, S.escuderia.dias / DIAS_ESCUDERIA * 100);
       let t = `<div class="card oro"><h2>${fem()?'Escudera':'Escudero'}</h2>
-        <p>Sin blasón ni caballo. Un año de días superados para ser examinado de nuevo y armado.</p>
+        <p>Sin blasón ni caballo. Un año de días superados para ser ${fem()?'examinada de nuevo y armada':'examinado de nuevo y armado'}.</p>
         <div class="barra"><i style="width:${pct}%"></i></div><p class="peq">${S.escuderia.dias} de ${DIAS_ESCUDERIA} días superados · armas aprendidas: ${Object.keys(S.armasConocidas).length} de ${ARMAS.length}</p>`;
       if (S.escuderia.dias >= DIAS_ESCUDERIA && e < EDAD_ARMAR) t += `<p>Has cumplido tu año, pero aún no tienes la edad conveniente (${EDAD_ARMAR} años; III, §5).</p>`;
       if (escuderiaCumplida()) t += `<button class="btn" data-a="sub" data-t="hoy" data-v="examen">Presentarse al examen</button>`;
@@ -182,6 +181,7 @@ function tarjetaDia(h, disc){
       <p>¿Qué te espera hoy?</p><div class="chips">${CIRCUNSTANCIAS.map(c=>`<button class="chip ${ci===c.id?'on':''}" data-a="circ" data-v="${c.id}">${esc(c.nombre)}</button>`).join('')}</div>
       <button class="btn ancho" data-a="empezarDia">Recibir la divisa del día</button></div>`;
     s += pendienteAyer();
+    if (['escudero','aspirante','orden','expulsado'].includes(S.situacion)) s += `<details class="card plegable"><summary>Mi arnés · <span class="peq">toca para verlo</span></summary>${tarjetaArnes(true).replace(/^<div class="card">/, '<div>')}</details>`;
     return s;
   }
   const dv = d.divisa;
@@ -190,38 +190,71 @@ function tarjetaDia(h, disc){
     <p class="divisa${/^[…«]/.test(dv.t)?' sin':''}">${esc(dv.t)}</p><div class="ref">${esc(dv.ref)}${dv.p!=null?` · <a href="#" data-a="leerPar" data-p="${dv.p}" data-n="${dv.n}">leer el parágrafo</a>`:''}${vozDisponible()?` · <a href="#" ${dv.p!=null?`data-a="vozPars" data-p="${dv.p}" data-n="${dv.n}"`:`data-a="voz" data-t="${esc(dv.t)}"`}>escuchar el parágrafo</a>`:''}</div>
     ${A && A.vicio ? `<p class="peq" style="margin-top:8px">Amaneces ${esc(A.nombre.toLowerCase())}: acecha la ${esc(A.vicio)}. Remedio: ${A.remedio.map(esc).join(' y ')} (${esc(A.ref)}).</p>` : ''}
     ${C && C.id!=='ordinario' ? `<p class="peq">${esc(C.nombre)}.</p>` : ''}</div>`;
-  s += tarjetaDeseo(h, d);
-  s += pendienteAyer();
+  const cDivisa = s; s = '';
+  const cDeseo = tarjetaDeseo(h, d), cPend = pendienteAyer();
   // pruebas
-  s += `<div class="card"><h2>Pruebas del día</h2>${d.pruebas.map((p,i)=>`
+  let cPruebas = `<div class="card"><h2>Pruebas del día</h2>${d.pruebas.map((p,i)=>`
     <div class="prueba"><div class="txt"><span class="tag v">${esc(p.tipo==='moral'?(VIRTUDES[VIRT_IDX[p.v]]||{}).nombre:p.tipo==='arma'?'Arma':p.tipo==='balanza'?'Balanza':'Oficio')}</span><b>${esc(p.t)}</b><span>${esc(p.d)}</span> ${p.ref?`<span class="ref">${esc(p.ref)}</span>`:''}</div>
       ${d.cerrado ? `<div>${p.ok?'✔︎':'✘'}</div>` : `<div class="tri"><button class="si ${p.ok===true?'on':''}" data-a="pr" data-i="${i}" data-v="1" aria-label="Superada">✔︎</button><button class="no ${p.ok===false?'on':''}" data-a="pr" data-i="${i}" data-v="0" aria-label="No superada">✘</button></div>`}
     </div>`).join('')}</div>`;
-  // ejercicio y física
+  // ejercicio y física (plegable)
   const opc = (S.perfil.opcionales||[]).map(id => OPCIONALES.find(o=>o.id===id)).filter(Boolean);
-  s += `<div class="card"><h2>El cuerpo (II, §10; III, §17)</h2>
+  let cCuerpo = `<span class="ref">II, §10; III, §17</span>
     <label class="fila"><input type="checkbox" data-a="ejer" ${d.ejercicio?'checked':''} ${d.cerrado?'disabled':''} style="width:26px;height:26px"> Ejercicio diario hecho: al menos ${edad()>=60?20:30} minutos</label>
     <div class="fila" style="margin-top:8px"><button class="btn sec" data-a="sub" data-t="mas" data-v="ejercicios">Pedir una rutina</button></div>`;
   if (d.fisica) {
     const p = d.fisica;
-    s += `<div class="prueba" style="margin-top:8px"><div class="txt"><span class="tag v">Prueba física</span><b>${esc(p.nombre)}</b><span>Objetivo: ${esc(fmtObj(p))}${p.unidad==='rep'?' repeticiones':''}</span></div></div>
+    cCuerpo += `<div class="prueba" style="margin-top:8px"><div class="txt"><span class="tag v">Prueba física</span><b>${esc(p.nombre)}</b><span>Objetivo: ${esc(fmtObj(p))}${p.unidad==='rep'?' repeticiones':''}</span></div></div>
       <div class="fila"><input type="text" inputmode="decimal" id="fisval" placeholder="Tu marca (${p.unidad==='min'?'minutos, p. ej. 1,5':'repeticiones'})" value="${p.valor!=null?numES(p.valor):''}" ${d.cerrado?'disabled':''} style="flex:1"><button class="btn sec" data-a="fisica" ${d.cerrado?'disabled':''}>Anotar</button></div>
       ${p.ok!=null ? `<p class="${p.ok?'':'rub'}">${p.ok?'Superada.':'No alcanzada.'}</p>`:''}`;
   }
-  if (opc.length) s += `<p style="margin-bottom:2px">Disciplinas practicadas hoy (multiplican la honra):</p><div class="chips">${opc.map(o=>`<button class="chip ${d.opcionales.includes(o.id)?'on':''}" data-a="opc" data-v="${o.id}" ${d.cerrado?'disabled':''}>${esc(o.nombre)} ×${o.mult}</button>`).join('')}</div>`;
-  else s += `<p class="peq">Si practicas equitación, esgrima u otras disciplinas, márcalas en Más › Ajustes: multiplican la honra.</p>`;
-  s += '</div>';
-  if (disc.ayuno || disc.abstinencia || disc.fiesta) s += `<div class="card"><h2>La mesa de hoy</h2><p>${disc.ayuno?esc(NUTRICION.ayuno)+' ':''}${disc.abstinencia?esc(NUTRICION.abstinencia)+' ':''}${disc.fiesta&&!disc.ayuno?esc(NUTRICION.fiesta):''}</p><p class="peq">${esc(disc.motivo)}</p></div>`;
+  if (opc.length) cCuerpo += `<p style="margin-bottom:2px">Disciplinas practicadas hoy (multiplican la honra):</p><div class="chips">${opc.map(o=>`<button class="chip ${d.opcionales.includes(o.id)?'on':''}" data-a="opc" data-v="${o.id}" ${d.cerrado?'disabled':''}>${esc(o.nombre)} ×${o.mult}</button>`).join('')}</div>`;
+  else cCuerpo += `<p class="peq">Si practicas equitación, esgrima u otras disciplinas, márcalas en Más › Ajustes: multiplican la honra.</p>`;
+  const fisPend = d.fisica && d.fisica.ok == null && !d.cerrado;
+  const resumenCuerpo = `Ejercicio: ${d.ejercicio ? 'hecho' : 'pendiente'}${d.fisica ? ` · prueba física: ${d.fisica.ok == null ? 'pendiente' : d.fisica.ok ? 'superada' : 'no alcanzada'}` : ''}`;
+  cCuerpo = `<details class="card plegable" ${fisPend ? 'open' : ''}><summary>El cuerpo · <span class="peq">${resumenCuerpo}</span></summary><div style="margin-top:8px">${cCuerpo}</div></details>`;
+  let cMesa = '';
+  if (disc.ayuno || disc.abstinencia || disc.fiesta) cMesa = `<details class="card plegable"><summary>La mesa de hoy · <span class="peq">${[disc.ayuno?'ayuno':'',disc.abstinencia?'abstinencia':'',disc.fiesta&&!disc.ayuno?'fiesta':''].filter(Boolean).join(' y ')}</span></summary><p>${disc.ayuno?esc(NUTRICION.ayuno)+' ':''}${disc.abstinencia?esc(NUTRICION.abstinencia)+' ':''}${disc.fiesta&&!disc.ayuno?esc(NUTRICION.fiesta):''}</p><p class="peq">${esc(disc.motivo)}</p></details>`;
   // examen
-  if (!d.cerrado) s += `<div class="card"><h2>Examen de la noche</h2><p>Antes de dormir, examina el día y declara qué pruebas superaste. <a href="${enlaceHora(h,'C')}" target="_blank" rel="noopener">Rezar Completas</a></p><button class="btn ancho osc" data-a="examenNoche" data-v="${h}">Hacer el examen</button></div>`;
-  else s += `<div class="card ${d.superado?'oro':'negra'}"><h2>Día ${d.superado?'superado':'no superado'}</h2><p>Honra ganada: ${d.honra}${d.opcionales.length&&d.superado?` (×${multiplicador(d).toFixed(2)})`:''}</p></div>`;
-  return s;
+  let cExamen;
+  if (!d.cerrado) cExamen = `<div class="card"><h2>Examen de la noche</h2><p>Antes de dormir, examina el día y declara qué pruebas superaste. <a href="${enlaceHora(h,'C')}" target="_blank" rel="noopener">Rezar Completas</a></p><button class="btn ancho osc" data-a="examenNoche" data-v="${h}">Hacer el examen</button></div>`;
+  else cExamen = `<div class="card ${d.superado?'oro':'negra'}"><h2>Día ${d.superado?'superado':'no superado'}</h2><p>Honra ganada: ${d.honra}${d.opcionales.length&&d.superado?` (×${multiplicador(d).toFixed(2)})`:''}</p></div>`;
+  // orden según el momento del día: por la noche, el examen sube
+  const hn = parseInt((S.ajustes.horaNoche || '22:00').split(':')[0], 10);
+  const noche = new Date().getHours() >= Math.min(19, hn - 3);
+  const arnes = ['escudero','aspirante','orden','expulsado'].includes(S.situacion) ? `<details class="card plegable"><summary>Mi arnés · <span class="peq">toca para verlo</span></summary>${tarjetaArnes(true).replace(/^<div class="card">/, '<div>')}</details>` : '';
+  const orden = (noche || d.cerrado) ? [cDivisa, cPend, cExamen, cPruebas, cDeseo, cCuerpo, cMesa, arnes] : [cDivisa, cPend, cDeseo, cPruebas, cCuerpo, cMesa, cExamen, arnes];
+  return orden.join('');
 }
 function pendienteAyer(){
   const y = hoyISO(new Date(Date.now()-86400000));
   const d = S.dias[y];
   if (d && !d.cerrado) return `<div class="aviso">No hiciste el examen de ayer. <a href="#" data-a="examenNoche" data-v="${y}">Hacerlo ahora</a></div>`;
   return '';
+}
+
+/* ---------- guía de primer uso ---------- */
+const GUIA = [
+  { t:'La Orden de Caballería', cita:['Mira bien, escudero, lo que has de hacer si tomas la Orden de Caballería; pues al hacerte caballero recibes a la par la honra y la servidumbre que corresponden a los amigos de la Caballería.','I, §7'],
+    p:['Esta app convierte el Libro de Llull en tu código de cada día.','Se entra por examen: costumbres y vida (Parte III), conocimientos (Parte IV) y cuerpo (III, §17). Si lo superas, eres armado en una fiesta de precepto; si no, sirves un año como escudero.','Los grados son los del Libro (II, §6): escudero, caballero de un escudo, valvasor, comdor y conde.'], img:'ornamento' },
+  { t:'El día del caballero', cita:['Debe ser costumbre del caballero oír misa y sermón, adorar, rogar y temer a Dios.','VI, §17'],
+    p:['Por la mañana dices cómo amaneces y qué te espera: recibes la divisa del día, sacada del Libro, y tus pruebas.','Ofreces tu gran deseo del día y, con el Breviario, rezas Laudes.','Por la noche haces examen: declaras tus pruebas y tu conducta, y el día queda superado o no.'] },
+  { t:'Las balanzas', cita:['La templanza es virtud que está en medio de dos vicios, uno por demasía y otro por defecto.','VI, §16'],
+    p:['Cada virtud es el fiel entre dos vicios. Once balanzas miden tu combate: virtud, dominio, amenaza y peligro.','Cada noche se mueven con tu conducta; cada mes te mides de nuevo.','Tu arnés brilla o se herrumbra según ellas: «tener aseado su arnés es oficio de caballero» (II, §31).'], img:'balanza' },
+  { t:'Caída y redención', cita:['El caballero ha de tener mayor horror al vituperio de las gentes que a la muerte.','III, §15'],
+    p:['Quien no se mantiene pierde el grado y debe reconquistarlo. La falta grave y la acidia llevan a la expulsión.','La redención es siempre posible: confesión, penitencia y nuevo examen.','No apagues el deseo: desea a lo grande y déjate gobernar por el Espíritu Santo. Ad maiora natus sum.'] }
+];
+function abrirGuia(i){
+  i = Math.max(0, Math.min(GUIA.length - 1, i || 0)); TMP.guia = i;
+  const G = GUIA[i];
+  const img = G.img === 'ornamento' ? '<div class="cen"><img src="ornamento.png" alt="" style="width:70%;max-width:280px"></div>'
+    : G.img === 'balanza' ? escalaSVG(30, BALANZAS[3]) : '';
+  modal(`<div class="peq cen">${GUIA.map((_,k)=>k===i?'●':'○').join(' ')}</div>${img}<h1 class="cen" style="font-size:1.6em">${esc(G.t)}</h1>
+    <div class="card roja"><p>«${esc(G.cita[0])}» <span class="ref">${esc(G.cita[1])}</span></p></div>
+    ${G.p.map(x=>`<p>${esc(x)}</p>`).join('')}
+    <div class="fila" style="justify-content:space-between;margin-top:10px">
+      ${i>0?`<button class="btn sec" data-a="guia" data-v="${i-1}">‹ Anterior</button>`:'<button class="btn sec" data-a="finGuia">Saltar</button>'}
+      ${i<GUIA.length-1?`<button class="btn" data-a="guia" data-v="${i+1}">Siguiente ›</button>`:'<button class="btn" data-a="finGuia">Empezar</button>'}</div>`);
 }
 
 /* ---------- el deseo: Sursum corda ---------- */
@@ -262,7 +295,7 @@ function balanzaSVG(v, B, peq){
 function tarjetaArnes(compacta){
   const caballero = S.situacion === 'orden' && !S.abatido;
   const sub = caballero ? 'Cada pieza brilla o se herrumbra según la balanza de la virtud que significa.' :
-    (S.situacion === 'expulsado' || S.abatido) ? 'Armas abatidas: se te restituirán al ser armado de nuevo.' :
+    (S.situacion === 'expulsado' || S.abatido) ? `Armas abatidas: se te restituirán al ser ${fem()?'armada':'armado'} de nuevo.` :
     `En perpunte y sin caballo. Llevas ${Object.keys(S.armasConocidas).length} de ${ARMAS.length} armas aprendidas; el caballo y las demás llegan con la investidura.`;
   return `<div class="card"><h2>Mi arnés</h2><p class="peq">«Tener aseado su arnés y herrar su caballo es oficio de caballero.» <span class="ref">II, §31</span></p>
     <div style="max-width:${compacta?360:440}px;margin:0 auto">${arnesSVG()}</div>
@@ -734,6 +767,7 @@ function vistaMas(){
     <a href="#" data-a="sub" data-t="mas" data-v="nutricion"><b>Nutrición</b><br><span class="peq">La templanza en la mesa (VI, §§9, 16)</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="calendario"><b>Calendario</b><br><span class="peq">Fiestas de precepto, ayunos y abstinencias</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="virtudes"><b>Virtudes y vicios</b><br><span class="peq">Parte VI</span></a>
+    <a href="#" data-a="verGuia"><b>Guía de la Orden</b><br><span class="peq">Cómo funciona la app, en cuatro pantallas</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="confesion"><b>Preparar la confesión</b><br><span class="peq">Mandamientos, pecados y deberes del oficio (IV, §1)</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="avisos"><b>Avisos diarios</b><br><span class="peq">Mañana y noche en el calendario del teléfono</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="copia"><b>Copia de seguridad</b></a>
@@ -806,7 +840,7 @@ function vistaAjustes(){
   return `<h1>Ajustes</h1>
     ${S.perfil ? `<div class="card"><h3>Mi retrato</h3>
       ${retratoURL() ? `<div class="cen">${medallonSVG(150)}</div>
-        <div class="chips" style="justify-content:center"><button class="chip ${S.perfil.estiloRetrato!=='natural'?'on':''}" data-a="estiloRetrato" data-v="ilustrado">Ilustrado</button><button class="chip ${S.perfil.estiloRetrato==='natural'?'on':''}" data-a="estiloRetrato" data-v="natural">Foto natural</button></div>` : '<p>Tu rostro aparecerá en el medallón, en el escudero y en la lámina de investidura.</p>'}
+        <div class="chips" style="justify-content:center"><button class="chip ${S.perfil.estiloRetrato!=='natural'?'on':''}" data-a="estiloRetrato" data-v="ilustrado">Ilustrado</button><button class="chip ${S.perfil.estiloRetrato==='natural'?'on':''}" data-a="estiloRetrato" data-v="natural">Foto natural</button></div>` : '<p>Tu rostro aparecerá en el medallón, en tu figura de escudero y en la lámina de investidura.</p>'}
       <label class="btn sec" style="cursor:pointer">${retratoURL()?'Cambiar retrato':'Añadir retrato'}<input type="file" id="fret" accept="image/*" style="display:none"></label>
       ${retratoURL() ? '<button class="btn sec" data-a="borrarRetrato">Quitar retrato</button>' : ''}
       <p class="peq">La foto se recorta, se reduce y se guarda solo en este teléfono; entra en la copia de seguridad.</p></div>` : ''}
@@ -935,6 +969,9 @@ const ACC = {
   leerCronica: () => leerEnVoz(cronicaTexto().map(p => ({ t:p.t, lengua:'es' }))),
   descargarCronica: () => { const t = cronicaTexto().map(p => p.h ? `\n${p.t.toUpperCase()}\n` : p.t).join('\n\n'); compartirBlob(new Blob([t], { type:'text/plain;charset=utf-8' }), 'cronica.txt', 'Crónica'); },
   meConfese: () => { marcarConfesion(); toast('Que Dios te bendiga.'); go(S.situacion === 'aspirante' && S.investidura ? 'hoy' : 'hoy', S.situacion === 'aspirante' && S.investidura ? 'investidura' : null); },
+  guia: el => abrirGuia(+el.dataset.v),
+  finGuia: () => { S.guiaVista = true; guardar(); cerrarModal(); },
+  verGuia: () => abrirGuia(0),
   finIngreso: () => { TMP.resIngreso = null; go('hoy'); },
   fiesta: el => { const F = proximasFiestas(new Date(), 6); señalarFiesta(F[+el.dataset.v]); render(); },
   cambiarFiesta: () => { S.investidura = null; guardar(); render(); },
@@ -1135,8 +1172,9 @@ render();
 splash();
 asegurarPersistencia();
 avisoCopiaAlAbrir();
+if (!S.guiaVista) setTimeout(() => { if (!document.getElementById('modal')) abrirGuia(0); }, S.perfil ? 2700 : 400);
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=15').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=16').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;

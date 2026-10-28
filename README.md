@@ -182,6 +182,13 @@ En Más › Ajustes se puede añadir una foto del rostro: se encuadra con el ded
 - **Lámina de investidura:** imagen para compartir el día de la investidura (IV, §12), con el retrato, las armas, el grado, la fiesta, la fecha, el padrino y el blasonado. En Mis armas, «Lámina de mi grado» genera la del grado actual.
 - Los estados de caída y deshonor nunca se aplican al rostro: solo a las armas.
 
+## Uso diario
+
+- **Guía de primer uso:** cuatro pantallas con citas del Libro (la Orden, el día, las balanzas, la caída y la redención). Aparece la primera vez y puede verse de nuevo en Más › Guía de la Orden.
+- **Hoy, según el momento del día:** por la mañana arriba la divisa, el deseo y las pruebas; desde las 19:00 (o tres horas antes de la hora del examen nocturno), el examen sube a continuación de la divisa. El cuerpo, la mesa y el arnés van plegados, con un resumen en una línea; el cuerpo se abre solo si hay una prueba física pendiente.
+- **Almacenamiento:** un año de uso ocupa unos 360 KB. Los días de hace más de 400 se compactan a su resumen (superado, honra, ejercicio, deseo); la evolución conserva un punto por semana y todas las mediciones.
+- **Breviario sin conexión:** al cargar el día, se guarda también el mes siguiente.
+
 ## La vida en la Orden
 
 - **Datos protegidos:** al abrir, la app pide al navegador que no borre sus datos aunque falte espacio (más fiable con la app instalada; el estado se ve en Copia de seguridad). Si la última copia tiene más de 30 días, avisa al abrir, una vez al día.

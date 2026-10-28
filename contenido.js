@@ -67,7 +67,7 @@ const PRUEBAS = {
     ['Terminar lo empezado','Acaba hoy una tarea que tenías abandonada por desgana.','VI, §12'],
     ['Madrugar','Levántate a la hora fijada, sin conceder minutos a la pereza.','VI, §12'],
     ['Animar a otro','Da ánimo verdadero a alguien que esté abatido.','VI, §4'],
-    ['Confianza en la prueba','Ante una contrariedad, di: «Hágase tu voluntad» y sigue trabajando.','VI, §4'],
+    ['Confianza en la prueba','Ante una contrariedad, di: «Hágase Tu voluntad» y sigue trabajando.','VI, §4'],
     ['Orden del día','Escribe por la mañana las tres cosas principales del día y cúmplelas.','VI, §12'],
     ['Las postrimerías','Medita cinco minutos sobre la muerte, el juicio, el infierno y la gloria.','IV, §5'],
     ['Trabajo bien hecho','Haz hoy tu trabajo con la perfección con que lo harías ante tu señor.','VI, §18'],
