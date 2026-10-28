@@ -1,5 +1,5 @@
 /* Código de Llull — service worker: funciona sin conexión y se actualiza solo. */
-const VERSION = 'llull-v14';
+const VERSION = 'llull-v15';
 const ARCHIVOS = ['./','index.html','app.js','data.js','contenido.js','fisico.js','blason.js','motor.js','arnes.js','retrato.js','llull.webmanifest','icon-144.png','icon-384.png',
   'unifraktur.woff2','garamond-400.woff2','garamond-400i.woff2','garamond-600.woff2',
   'banda.png','ornamento.png','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png',

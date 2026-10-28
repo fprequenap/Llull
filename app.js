@@ -326,11 +326,53 @@ function tarjetaEvolucion(){
 
 /* ---------- el Libro en voz alta ---------- */
 function vozDisponible(){ return 'speechSynthesis' in window; }
+/* Lectura: textos = [{t, lengua:'es'|'lem'}]. El lemosín se lee con la voz que el teléfono tenga para el código «ca». */
+function vozPara(lengua){
+  const voces = speechSynthesis.getVoices();
+  if (lengua === 'lem') return voces.find(v => /^ca/i.test(v.lang)) || null;
+  return voces.find(v => /^es-ES/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang)) || null;
+}
 function leerEnVoz(textos){
   if (!vozDisponible()) return;
   speechSynthesis.cancel();
-  const voces = speechSynthesis.getVoices(), es = voces.find(v => /^es(-ES)?/i.test(v.lang) && /ES/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang));
-  for (const t of textos) { const u = new SpeechSynthesisUtterance(t); u.lang = 'es-ES'; if (es) u.voice = es; u.rate = 0.95; speechSynthesis.speak(u); }
+  const hayVoces = speechSynthesis.getVoices().length > 0;
+  let lista = textos.map(x => typeof x === 'string' ? { t:x, lengua:'es' } : x);
+  if (hayVoces && lista.some(x => x.lengua === 'lem') && !vozPara('lem')) {
+    toast('Tu teléfono no tiene instalada una voz para el lemosín (código «ca»). Puedes añadirla en los ajustes de voz del sistema; mientras, se lee en español.', 6000);
+    lista = lista.filter(x => x.lengua !== 'lem');
+    if (!lista.length) return;
+  }
+  lista.forEach((x, i) => {
+    const u = new SpeechSynthesisUtterance(x.t);
+    u.lang = x.lengua === 'lem' ? 'ca-ES' : 'es-ES';
+    const v = vozPara(x.lengua); if (v) { try { u.voice = v; } catch(e){} }
+    u.rate = x.lengua === 'lem' ? 0.9 : 0.95;
+    if (i === lista.length - 1) { u.onend = ocultarParar; u.onerror = ocultarParar; }
+    speechSynthesis.speak(u);
+  });
+  mostrarParar();
+}
+function mostrarParar(){
+  ocultarParar();
+  const b = document.createElement('button');
+  b.id = 'vozStop'; b.className = 'btn osc'; b.textContent = '■ Parar la lectura';
+  b.style.cssText = 'position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:80;box-shadow:0 2px 10px rgba(0,0,0,.3)';
+  b.addEventListener('click', () => { speechSynthesis.cancel(); ocultarParar(); });
+  document.body.appendChild(b);
+}
+function ocultarParar(){ const b = document.getElementById('vozStop'); if (b) b.remove(); }
+function textosDePars(P, ns){
+  const modo = S.ajustes.voz || 'es', L = [];
+  for (const n of ns) {
+    const x = P.pars.find(y => y.n === n); if (!x) continue;
+    if (modo !== 'es') L.push({ t:x.lem, lengua:'lem' });
+    if (modo !== 'lem') L.push({ t:x.es, lengua:'es' });
+  }
+  return L;
+}
+function selectorVoz(){
+  const m = S.ajustes.voz || 'es';
+  return `<select data-a="vozModo" style="width:auto" aria-label="Lengua de la lectura"><option value="es" ${m==='es'?'selected':''}>Leer en español</option><option value="lem" ${m==='lem'?'selected':''}>Leer en lemosín</option><option value="ambas" ${m==='ambas'?'selected':''}>Lemosín y español</option></select>`;
 }
 
 /* Regla graduada de −100 (defecto) a +100 (exceso), con las zonas a cada lado del fiel */
@@ -550,7 +592,7 @@ function vistaLeer(k){
     s += `<div class="lector ${cls}">`;
     if (P.invocacion) s += `<div class="par"><div class="lem rub">${esc(P.invocacion.lem)}</div><div class="es rub"><i>${esc(P.invocacion.es)}</i></div></div>`;
     s += `<div class="titlem">${esc(P.tituloLem||'')}</div><div class="tit">${esc(P.nombre)}${P.id?'. '+esc(P.titulo):''}</div>${banda()}`;
-    if (vozDisponible()) s += `<div class="fila" style="justify-content:center;margin-bottom:6px"><button class="btn sec" data-a="vozPars" data-p="${P.id}" data-n="">Escuchar esta parte</button><button class="btn sec" data-a="vozParar">Parar</button></div>`;
+    if (vozDisponible()) s += `<div class="fila" style="justify-content:center;margin-bottom:6px">${selectorVoz()}<button class="btn sec" data-a="vozPars" data-p="${P.id}" data-n="">Escuchar esta parte</button><button class="btn sec" data-a="vozParar">Parar</button></div>`;
     for (const x of P.pars) s += `<div class="par" id="p-${P.id}-${x.n}"><div class="lem">${esc(x.lem)}</div><div class="es">${x.n>1||P.id===0&&!x.cap?`<span class="num">${x.n}.</span>`:''}${parrafoTexto(x)}${vozDisponible()?` <a href="#" class="peq" data-a="vozPars" data-p="${P.id}" data-n="${x.n}" aria-label="Escuchar el parágrafo ${x.n}">▶ escuchar</a>`:''}</div></div>`;
     s += '</div>';
     const ant = P.id>0 ? `<button class="btn sec" data-a="leer" data-v="parte${P.id-1}">‹ ${esc(LIBRO.partes[P.id-1].nombre)}</button>` : '';
@@ -756,6 +798,7 @@ function vistaAjustes(){
       ${retratoURL() ? '<button class="btn sec" data-a="borrarRetrato">Quitar retrato</button>' : ''}
       <p class="peq">La foto se recorta, se reduce y se guarda solo en este teléfono; entra en la copia de seguridad.</p></div>` : ''}
     <div class="card"><label class="campo"><span>Tamaño de la letra: ${A.tam||19} px</span><input type="range" min="15" max="26" value="${A.tam||19}" data-a="tam" style="width:100%"></label>
+    ${vozDisponible() ? `<label class="campo"><span>Lectura en voz alta</span>${selectorVoz().replace('style="width:auto"','')}</label>` : ''}
     <label class="campo"><span>Lector</span><select data-a="cols"><option value="ambas" ${A.columnas==='ambas'?'selected':''}>Lemosín y español</option><option value="es" ${A.columnas==='es'?'selected':''}>Solo español</option><option value="lem" ${A.columnas==='lem'?'selected':''}>Solo lemosín</option></select></label></div>
     ${S.perfil ? `<div class="card"><h3>Disciplinas que practicas</h3><p class="peq">${e>=65?'Como el viejo caballero del Prólogo, las disciplinas de monta y armas se sustituyen por las del estudio y las artes.':'Multiplican la honra de los días superados en que las practiques.'}</p>
       <div class="chips">${disp.map(o=>`<button class="chip ${mias.includes(o.id)?'on':''}" data-a="miopc" data-v="${o.id}">${esc(o.nombre)} ×${o.mult}</button>`).join('')}</div>
@@ -867,8 +910,8 @@ const ACC = {
   guardarPadrino: () => { const v = ($('#padrino').value || '').trim(); if (!v) return toast('Escribe el nombre de tu padrino.'); S.perfil.padrino = v; TMP.editPadrino = false; anotar(`Toma por padrino a ${v}.`, 'honor'); guardar(); render(); },
   editPadrino: () => { TMP.editPadrino = true; render(); },
   voz: el => leerEnVoz([el.dataset.t]),
-  vozPars: el => { const P = LIBRO.partes[+el.dataset.p]; const ns = el.dataset.n ? el.dataset.n.split(',').map(Number) : P.pars.map(x=>x.n); leerEnVoz(ns.map(n => P.pars.find(x=>x.n===n)).filter(Boolean).map(x => x.es)); },
-  vozParar: () => { if (vozDisponible()) speechSynthesis.cancel(); },
+  vozPars: el => { const P = LIBRO.partes[+el.dataset.p]; const ns = el.dataset.n ? el.dataset.n.split(',').map(Number) : P.pars.map(x=>x.n); leerEnVoz(textosDePars(P, ns)); },
+  vozParar: () => { if (vozDisponible()) speechSynthesis.cancel(); ocultarParar(); },
   guardarRetrato: () => { guardarRetrato(); cerrarModal(); render(); toast('Retrato guardado.'); },
   estiloRetrato: el => { S.perfil.estiloRetrato = el.dataset.v; guardar(); render(); },
   borrarRetrato: () => { if (!TMP.borrarRet) { TMP.borrarRet = true; toast('Pulsa otra vez para quitar el retrato.'); return; } TMP.borrarRet = false; delete S.perfil.retrato; guardar(); render(); },
@@ -993,6 +1036,7 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'fret' && el.files && el.files[0]) { abrirRecorte(el.files[0]); el.value = ''; return; }
+  if (el.dataset && el.dataset.a === 'vozModo') { S.ajustes.voz = el.value; guardar(); document.querySelectorAll('select[data-a=vozModo]').forEach(x => x.value = el.value); return; }
   if (el.dataset && el.dataset.a === 'evo') { TMP.evo = el.value; const y = window.scrollY; render(); window.scrollTo(0, y); return; }
   if (el.dataset && el.dataset.a === 'cols') { S.ajustes.columnas = el.value; guardar(); render(); }
   if (el.dataset && el.dataset.a === 'tam') { S.ajustes.tam = +el.value; document.documentElement.style.setProperty('--fs', el.value + 'px'); guardar(); render(); }
@@ -1054,7 +1098,7 @@ function abrirCita(cit){
   cerrarCita();
   const c = document.createElement('div'); c.className = 'modal'; c.id = 'cita'; c.style.zIndex = 65;
   c.innerHTML = `<div class="hoja"><div class="fila" style="justify-content:space-between;margin-bottom:6px">
-      <button class="btn" data-a="cerrarCita">‹ Volver</button>${vozDisponible()?`<button class="btn sec" data-a="vozPars" data-p="${p}" data-n="${nums.join(',')}">Escuchar</button>`:''}<button class="btn sec" data-a="citaLibro" data-p="${p}" data-n="${pars.length?pars[0].n:1}">Abrir en el Libro</button></div>
+      <button class="btn" data-a="cerrarCita">‹ Volver</button>${vozDisponible()?`<button class="btn sec" data-a="vozPars" data-p="${p}" data-n="${nums.join(',')}">Escuchar</button>`:''}</div>${vozDisponible()?`<div class="fila" style="margin-bottom:6px">${selectorVoz()}`:'<div>'}<button class="btn sec" data-a="citaLibro" data-p="${p}" data-n="${pars.length?pars[0].n:1}">Abrir en el Libro</button></div>
     <h2>${esc(P.nombre)}${P.id?'. '+esc(P.titulo):''}</h2>
     <div class="lector ${cls}">${pars.map(x=>`<div class="par"><div class="lem">${esc(x.lem)}</div><div class="es"><span class="num">§${x.n}.</span> ${parrafoTexto(x)}</div></div>`).join('')}</div>
     <div class="fila" style="margin-top:12px"><button class="btn ancho" data-a="cerrarCita">‹ Volver</button></div></div>`;
@@ -1072,7 +1116,7 @@ comprobarAcidia();
 render();
 splash();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=12').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=13').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;
