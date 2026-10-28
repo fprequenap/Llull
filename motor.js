@@ -320,7 +320,7 @@ function evaluarIngreso(r){
 function aplicarIngreso(res, tipo){
   const e = edad(), hoy = hoyISO();
   S.examenes.push({ fecha:hoy, tipo, aprobado:res.aprobado, notaMoral:res.notaMoral, notaQuiz:res.notaQuiz, det:res.det });
-  if (res.bal) { S.balanzas = { ...res.bal }; S.cartaInicial = hoy; }
+  if (res.bal) { S.balanzas = { ...res.bal }; S.cartaInicial = hoy; S.mediciones = [{ fecha:hoy, bal:{ ...res.bal }, tipo:'ingreso' }]; }
   if (res.aprobado) {
     if (e < EDAD_ARMAR) {
       S.situacion = 'escudero'; S.escuderia = { dias:0, inicio:hoy };
@@ -443,3 +443,45 @@ function balanzasDeLaNoche(fecha){
   while (L.length < 2) { const id = BALANZAS[i % BALANZAS.length].id; if (!L.includes(id)) L.push(id); i++; }
   return L.slice(0, 3);
 }
+
+
+/* ---------- mediciones de conducta: mensual o a voluntad ---------- */
+const DIAS_MEDICION = 30;
+/* La primera carta de un miembro antiguo es informativa; las siguientes cuentan los rojos */
+function aplicarMedicion(carta){
+  const nueva = cartaABalanzas(carta), primera = !S.cartaInicial;
+  let evento = null;
+  S.mediciones = S.mediciones || [];
+  for (const B of BALANZAS) {
+    const antes = S.balanzas[B.id] || 0, v = nueva[B.id];
+    S.balanzas[B.id] = v;
+    if (!primera && zona(v) === 'peligro' && zona(antes) !== 'peligro') { const e = registrarRojo(B.id, v); if (e) evento = e; }
+  }
+  S.mediciones.push({ fecha: hoyISO(), bal:{ ...nueva }, tipo: primera ? 'informativa' : 'mensual' });
+  if (S.mediciones.length > 60) S.mediciones.shift();
+  S.cartaInicial = S.cartaInicial || hoyISO();
+  S.ultimaMedicion = hoyISO();
+  anotar(primera ? 'Sitúa sus balanzas con la carta de conducta (informativa).' : `Medición de conducta: cercanía a la Orden ${cercania(S.balanzas)} %.`);
+  guardar();
+  return evento;
+}
+function ultimaMedicion(){ return S.ultimaMedicion || S.cartaInicial || null; }
+function proximaMedicion(){ const u = ultimaMedicion(); if (!u) return null; const d = deISO(u); d.setDate(d.getDate() + DIAS_MEDICION); return d; }
+function medicionPendiente(){ const p = proximaMedicion(); return !!p && hoyISO(p) <= hoyISO(); }
+/* Cercanía a lo que la Orden pide: 100 % = todas las balanzas en el fiel */
+function cercania(bal){ const L = BALANZAS.map(B => Math.abs((bal||{})[B.id] || 0)); return Math.round(100 - L.reduce((a,b)=>a+b,0) / L.length); }
+function juicioCercania(c){
+  if (c >= 85) return 'Muy cerca: la virtud está asentada.';
+  if (c >= 70) return 'Cerca: el combate va ganado, sin bajar la guardia.';
+  if (c >= 55) return 'En camino: hay frentes abiertos.';
+  if (c >= 40) return 'Lejos: varios vicios mandan todavía.';
+  return 'Muy lejos: empieza por la balanza más inclinada.';
+}
+/* Puntos de lucha: cuánto falta hasta la zona mejor y hasta el medio, y noches limpias estimadas */
+function puntosLucha(v){
+  const a = Math.abs(v || 0), i = ZONAS.findIndex(z => a < z.hasta);
+  const hastaMedio = a, objetivo = i > 0 ? ZONAS[i-1] : null;
+  const hastaZona = objetivo ? Math.max(1, Math.ceil(a - objetivo.hasta + 1)) : 0;
+  return { hastaMedio, hastaZona, objetivo, noches: Math.ceil(hastaZona / 8) };
+}
+function medicionAnterior(){ const M = S.mediciones || []; return M.length >= 2 ? M[M.length-2] : null; }

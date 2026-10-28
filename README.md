@@ -150,6 +150,10 @@ En cada grado se exige, además, toda la tabla física de la edad.
 - **Cada día**, la balanza más inclinada recibe una prueba que empuja hacia el medio **desde su lado**: no se combate igual la ira que el consentimiento de la injusticia.
 - **El hábito no se borra con el perdón:** la confesión perdona la culpa, pero el fiel solo vuelve al medio con actos contrarios.
 - **Regla del rojo:** las balanzas son guía, salvo que el fiel llegue al rojo más de 3 veces. Entonces se pierde el empleo inmediato inferior; del escudero, la expulsión. El recuento vuelve a cero en cada cambio de grado.
+- **Medición:** cada 30 días la app pide una medición de conducta (carta de frecuencias del último mes), y puede hacerse cuando se quiera. Coloca las balanzas donde uno está; si alguna entra en el rojo, cuenta. La primera carta de un miembro antiguo es solo informativa.
+- **Puntos de lucha:** cada balanza indica cuántos puntos faltan hasta la zona mejor y hasta el medio, y cuántas noches limpias supone (una noche sin falta acerca el fiel 8 puntos; la prueba del día superada, 6).
+- **Cercanía a la Orden:** 100 % menos la desviación media de las once balanzas; 100 % es tenerlas todas en el fiel. Se compara con la medición anterior.
+- **Escala graduada:** bajo cada balanza, una regla de 100 (defecto) a 100 (exceso) con las zonas marcadas y la posición del fiel; debajo, cómo combatir el lado hacia el que se inclina.
 - **No retroactividad:** quien ya estaba en la Orden conservó su grado; el recuento de rojos empezó en cero, y la carta de conducta que hacen los miembros antiguos es solo informativa.
 
 ## El deseo
@@ -318,7 +322,7 @@ Si se borra el navegador, o se pierde o cambia el teléfono, el progreso se pier
 ## Actualizar la aplicación
 
 1. Modifica los archivos.
-2. En `sw.js`, cambia la constante `VERSION` (por ejemplo, de `llull-v9` a `llull-v10`).
+2. En `sw.js`, cambia la constante `VERSION` (por ejemplo, de `llull-v10` a `llull-v11`).
 3. En `app.js`, cambia el parámetro del registro del service worker (por ejemplo, `sw.js?v=4` → `sw.js?v=5`).
 4. Sube los archivos al repositorio.
 

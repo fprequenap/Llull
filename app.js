@@ -85,6 +85,7 @@ function vistaHoy(){
   if (disc.abstinencia) marcas.push('<span class="tag" style="color:#9E1F17">Abstinencia</span>');
   if (marcas.length) s += `<div style="margin:4px 0 10px">${marcas.join(' ')}</div>`;
   if (S.ultimaCopia == null || difDias(S.ultimaCopia, h) > 30) s += `<div class="aviso">Haz una copia de seguridad de tu progreso: si pierdes o cambias el teléfono, se pierde. <a href="#" data-a="sub" data-t="mas" data-v="copia">Hacer copia</a></div>`;
+  if (S.cartaInicial && medicionPendiente() && ['orden','escudero','aspirante','expulsado'].includes(S.situacion)) s += `<div class="aviso">Toca la medición mensual de tus balanzas. <a href="#" data-a="abrirCarta">Medirme ahora</a></div>`;
   s += tarjetaSituacion();
   if (['escudero','aspirante','orden','expulsado'].includes(S.situacion)) s += tarjetaDia(h, disc);
   return s;
@@ -254,15 +255,63 @@ function balanzaSVG(v, B, peq){
     ${peq?'':`<text x="22" y="116" font-size="9" fill="#6B5E4B" font-family="EB Garamond,serif">${esc(B.def.n.split(':')[0])}</text><text x="178" y="116" font-size="9" fill="#6B5E4B" text-anchor="end" font-family="EB Garamond,serif">${esc(B.exc.n.split(':')[0])}</text>`}
   </svg>`;
 }
+/* Regla graduada de −100 (defecto) a +100 (exceso), con las zonas a cada lado del fiel */
+function escalaSVG(v, B){
+  v = Math.max(-100, Math.min(100, v || 0));
+  const x0 = 12, w = 316, X = t => x0 + (t + 100) / 200 * w;
+  const tramos = [[-100,-70,3],[-70,-45,2],[-45,-20,1],[-20,20,0],[20,45,1],[45,70,2],[70,100,3]];
+  let band = '', rot = '';
+  for (const [a, b, z] of tramos) {
+    const Z = ZONAS[z];
+    band += `<rect x="${X(a)}" y="22" width="${X(b)-X(a)}" height="16" fill="${Z.c}"/>`;
+    const n = { 0:'Virtud', 1:'Dominio', 2:'Amenaza', 3:'Peligro' }[z];
+    rot += `<text x="${(X(a)+X(b))/2}" y="18" text-anchor="middle" font-size="9" fill="#6B5E4B" font-family="EB Garamond,serif">${n}</text>`;
+  }
+  let ticks = '';
+  for (const t of [-100,-70,-45,-20,0,20,45,70,100]) ticks += `<path d="M${X(t)},38 v5" stroke="#5B4A33" stroke-width="${t===0?2:1}"/><text x="${X(t)}" y="52" text-anchor="middle" font-size="8" fill="#6B5E4B" font-family="EB Garamond,serif">${Math.abs(t)}</text>`;
+  const Zv = zonaObj(v), mx = X(v);
+  return `<svg viewBox="0 0 340 74" width="100%" style="display:block;margin:6px 0 4px" role="img" aria-label="Escala: ${esc(Zv.n)}, ${Math.abs(Math.round(v))} puntos ${v>0?'hacia el exceso':v<0?'hacia el defecto':'en el fiel'}">
+    ${rot}${band}<rect x="${x0}" y="22" width="${w}" height="16" fill="none" stroke="#5B4A33" stroke-width="1"/>
+    <path d="M${X(0)},20 v20" stroke="#5B4A33" stroke-width="2"/>${ticks}
+    <path d="M${mx-7},8 L${mx+7},8 L${mx},20 Z" fill="${Zv.id==='virtud'?'#1B1A1A':Zv.c}" stroke="#1B1A1A" stroke-width="1"/>
+    <path d="M${mx},20 v20" stroke="#1B1A1A" stroke-width="3"/>
+    <text x="${x0}" y="68" font-size="9.5" fill="#3A2F27" font-family="EB Garamond,serif">◀ ${esc(B.def.n.split(':')[0])}</text>
+    <text x="${x0+w}" y="68" text-anchor="end" font-size="9.5" fill="#3A2F27" font-family="EB Garamond,serif">${esc(B.exc.n.split(':')[0])} ▶</text></svg>`;
+}
 function tarjetaCombate(){
   if (!['orden','escudero','aspirante','expulsado'].includes(S.situacion)) return '';
   const lista = BALANZAS.map(B => ({ B, v: S.balanzas[B.id] || 0 })).sort((a,b) => Math.abs(b.v) - Math.abs(a.v));
+  const c = cercania(S.balanzas), M = S.mediciones || [], ant = M.length ? M[M.length-1] : null;
+  const cAnt = M.length >= 2 ? cercania(M[M.length-2].bal) : null;
+  const prox = proximaMedicion();
   let s = `<div class="card roja"><h2>Mi combate: las balanzas</h2>
-    <p class="peq">«La templanza es virtud que está en medio de dos vicios, uno por demasía y otro por defecto.» <span class="ref">VI, §16</span></p>
-    <p class="peq">${ZONAS.map(z=>`<span class="sw" style="background:${z.c};width:14px;height:14px"></span> ${z.n}`).join(' · ')} · Rojos: <b>${S.rojos||0}</b> de ${ROJOS_MAX} tolerados</p>`;
-  if (!S.cartaInicial) s += `<div class="aviso">Tus balanzas están en el medio porque aún no has hecho la carta de conducta. Es informativa: no cambia tu grado.</div><button class="btn sec" data-a="abrirCarta">Hacer la carta de conducta</button>`;
-  s += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px">${lista.map(({B,v})=>{ const Z = zonaObj(v);
-    return `<div style="border:1px solid var(--linea);border-radius:8px;padding:6px 6px 8px;background:#fff">${balanzaSVG(v,B,true)}<div class="cen" style="font-size:.86em"><b>${esc(B.nombre)}</b><br><span style="color:${Z.id==='virtud'?'#6B5E4B':Z.c}">${esc(Z.n)}${v?` · ${esc(ladoNombre(B,v).split(':')[0].toLowerCase())}`:''}</span><br><span class="ref">${esc(B.ref)}</span></div></div>`; }).join('')}</div></div>`;
+    <p class="peq">«La templanza es virtud que está en medio de dos vicios, uno por demasía y otro por defecto.» <span class="ref">VI, §16</span></p>`;
+  if (!S.cartaInicial) s += `<div class="aviso">Tus balanzas están en el medio porque aún no te has medido. La primera carta de conducta es informativa: no cambia tu grado ni cuenta rojos.</div><button class="btn" data-a="abrirCarta">Medirme ahora</button>`;
+  else {
+    const Zc = c >= 85 ? ZONAS[0] : c >= 70 ? ZONAS[1] : c >= 55 ? ZONAS[2] : ZONAS[3];
+    s += `<div style="background:#fff;border:1px solid var(--linea);border-radius:10px;padding:12px;margin:8px 0">
+      <div class="peq">Cercanía a lo que la Orden pide de ti</div>
+      <div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:2.4em;font-weight:600;white-space:nowrap;color:${Zc.id==='virtud'?'#2F6B37':Zc.c}">${c} %</span>
+        ${cAnt!=null?`<span class="peq">${c>cAnt?'▲ +'+(c-cAnt):c<cAnt?'▼ '+(c-cAnt):'='} desde la medición anterior (${cAnt} %)</span>`:''}</div>
+      <div class="barra" style="height:12px"><i style="width:${c}%;background:${Zc.id==='virtud'?'#2F6B37':Zc.c}"></i></div>
+      <p style="margin:6px 0 0">${esc(juicioCercania(c))}</p>
+      <p class="peq" style="margin:4px 0 0">100 % es tener todas las balanzas en el fiel. Se calcula con la posición actual, que se mueve cada noche.</p></div>
+      <p class="peq">Última medición: ${deISO(ultimaMedicion()).toLocaleDateString('es-ES')} · próxima: <b>${prox.toLocaleDateString('es-ES')}</b>${medicionPendiente()?' (pendiente)':''} · Rojos: <b>${S.rojos||0}</b> de ${ROJOS_MAX} tolerados</p>
+      <button class="btn ${medicionPendiente()?'':'sec'}" data-a="abrirCarta">${medicionPendiente()?'Hacer la medición del mes':'Medirme ahora'}</button>`;
+  }
+  s += `<p class="peq" style="margin-top:10px">${ZONAS.map(z=>`<span class="sw" style="background:${z.c};width:14px;height:14px"></span> ${z.n}`).join(' · ')}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px;margin-top:6px">${lista.map(({B,v})=>{ const Z = zonaObj(v), P = puntosLucha(v);
+      const vAnt = ant ? (M.length >= 2 ? (M[M.length-2].bal[B.id]||0) : null) : null;
+      const tend = vAnt == null ? '' : Math.abs(v) < Math.abs(vAnt) ? ' <span style="color:#2F6B37">▼ mejora</span>' : Math.abs(v) > Math.abs(vAnt) ? ' <span style="color:#B3201F">▲ empeora</span>' : '';
+      return `<div style="border:1px solid var(--linea);border-radius:8px;padding:8px 10px 10px;background:#fff">
+        <div style="display:flex;gap:10px;align-items:center"><div style="width:84px;flex:none">${balanzaSVG(v,B,true)}</div>
+          <div style="flex:1;font-size:.92em"><b>${esc(B.nombre)}</b><br><span style="color:${Z.id==='virtud'?'#6B5E4B':Z.c};font-weight:600">${esc(Z.n)}</span>${v?` · ${esc(ladoNombre(B,v).split(':')[0].toLowerCase())}`:''}${tend}</div></div>
+        ${escalaSVG(v,B)}
+        <div style="font-size:.86em">
+        ${P.objetivo ? `<span style="font-size:.95em">Lucha: <b>${P.hastaZona}</b> pts hasta ${esc(P.objetivo.n.toLowerCase())} (≈${P.noches} ${P.noches===1?'noche limpia':'noches limpias'}) · ${P.hastaMedio} hasta el medio</span><br>` : '<span style="font-size:.95em">En el fiel: guárdalo</span><br>'}
+        ${Z.id!=='virtud' ? `<details style="margin-top:4px"><summary style="cursor:pointer;color:var(--rojo)">Cómo combatir ${esc(ladoNombre(B,v).split(':')[0].toLowerCase())}</summary><ul style="margin:4px 0 0;padding-left:20px">${B[v>0?'exc':'def'].p.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>` : ''}
+        <span class="ref">${esc(B.ref)}</span></div></div>`; }).join('')}</div>
+    <p class="peq" style="margin-top:8px">Una noche sin falta en esa balanza acerca el fiel 8 puntos; su prueba del día superada, 6 más.</p></div>`;
   return s;
 }
 function cartaCompleta(c){ return BALANZAS.every(B => c[B.id] && c[B.id].exc != null && c[B.id].def != null); }
@@ -722,8 +771,9 @@ const ACC = {
   reexUnidades: () => { S.reexUnidades = true; S.borrador = null; S.situacion = 'nuevo'; S.escuderia = { dias:0, inicio:null }; anotar('Repite el examen de ingreso por la corrección de unidades.'); guardar(); go('hoy','examen'); },
   ib: el => { const B = borrador(); B.bal = B.bal || {}; const o = B.bal[el.dataset.b] = B.bal[el.dataset.b] || {}; o[el.dataset.l] = +el.dataset.v; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); },
   cb: el => { const C = TMP.carta; const o = C[el.dataset.b] = C[el.dataset.b] || {}; o[el.dataset.l] = +el.dataset.v; el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); el.classList.add('on'); },
-  abrirCarta: () => { TMP.carta = {}; modal(`<h2>Carta de conducta</h2><p>Informativa: sitúa tus balanzas, pero no altera tu grado ni cuenta como rojo. Responde por tu conducta en el <b>último mes</b>: con qué frecuencia…</p>${cartaHTML({}, 'cb')}<button class="btn ancho" data-a="guardarCarta">Situar mis balanzas</button>`); },
-  guardarCarta: () => { if (!cartaCompleta(TMP.carta)) return toast('Responde a todas las preguntas.'); S.balanzas = cartaABalanzas(TMP.carta); S.cartaInicial = hoy(); anotar('Sitúa sus balanzas con la carta de conducta.'); guardar(); cerrarModal(); render(); },
+  abrirCarta: () => { TMP.carta = {}; modal(`<h2>Medición de conducta</h2><p>${S.cartaInicial ? 'Mide tu conducta del <b>último mes</b>. Las balanzas se colocan donde estás hoy; si alguna entra en el rojo, cuenta como tal.' : 'Esta primera carta es informativa: sitúa tus balanzas, pero no altera tu grado ni cuenta como rojo.'} Responde por lo que hiciste, no por cómo te ves: con qué frecuencia…</p>${cartaHTML({}, 'cb')}<button class="btn ancho" data-a="guardarCarta">Colocar mis balanzas</button>`); },
+  guardarCarta: () => { if (!cartaCompleta(TMP.carta)) return toast('Responde a todas las preguntas.'); const e = aplicarMedicion(TMP.carta); cerrarModal(); render();
+    if (e === 'expulsion') toast('Expulsión de la Orden. La redención es siempre posible.', 4500); else if (e === 'degradacion') toast(`Más de ${ROJOS_MAX} veces en el rojo: degradación. Reconquístalo.`, 4500); else toast(`Cercanía a la Orden: ${cercania(S.balanzas)} %`); },
   nbal: el => { const N = TMP.noche; const o = N.bal[el.dataset.b] = N.bal[el.dataset.b] || {}; o[el.dataset.l] = +el.dataset.v; el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); el.classList.add('on'); },
   nesp: el => { TMP.noche.espiritu = el.dataset.v; el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); el.classList.add('on'); },
   deseo: () => { const d = S.dias[hoy()]; d.deseo = ($('#deseo').value || '').trim(); guardar(); toast('Que así sea.'); render(); },
@@ -923,7 +973,7 @@ comprobarAcidia();
 render();
 splash();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=7').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=9').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;
