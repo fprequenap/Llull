@@ -170,7 +170,7 @@ En cada grado se exige, además, toda la tabla física de la edad.
 
 - **Padrino:** el caballero elige como padrino a uno de los mejores caballeros de la Historia, escribiendo él mismo el nombre (IV, §9). Le arma en la investidura, preside sus ascensos y cada noche le pregunta qué diría de su día.
 - **Evolución:** gráfico de la cercanía a la Orden y de cada balanza, noche a noche, con las mediciones mensuales marcadas.
-- **El Libro en voz alta:** la divisa, cualquier cita y cada Parte del Libro pueden escucharse con la voz del teléfono.
+- **El Libro en voz alta:** el parágrafo completo de la divisa del día, cualquier cita, cada parágrafo del lector y cada Parte entera pueden escucharse con la voz del teléfono.
 
 ## Mi retrato
 

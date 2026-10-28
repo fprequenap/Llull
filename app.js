@@ -185,7 +185,7 @@ function tarjetaDia(h, disc){
   const dv = d.divisa;
   const A = ANIMOS.find(a=>a.id===d.animo), C = CIRCUNSTANCIAS.find(c=>c.id===d.circ);
   s += `<div class="card roja">${dv.santo ? `<div class="tag v">${esc(dv.santo)}</div>` : ''}
-    <p class="divisa${/^[…«]/.test(dv.t)?' sin':''}">${esc(dv.t)}</p><div class="ref">${esc(dv.ref)}${dv.p!=null?` · <a href="#" data-a="leerPar" data-p="${dv.p}" data-n="${dv.n}">leer el parágrafo</a>`:''}${vozDisponible()?` · <a href="#" data-a="voz" data-t="${esc(dv.t)}">escuchar</a>`:''}</div>
+    <p class="divisa${/^[…«]/.test(dv.t)?' sin':''}">${esc(dv.t)}</p><div class="ref">${esc(dv.ref)}${dv.p!=null?` · <a href="#" data-a="leerPar" data-p="${dv.p}" data-n="${dv.n}">leer el parágrafo</a>`:''}${vozDisponible()?` · <a href="#" ${dv.p!=null?`data-a="vozPars" data-p="${dv.p}" data-n="${dv.n}"`:`data-a="voz" data-t="${esc(dv.t)}"`}>escuchar el parágrafo</a>`:''}</div>
     ${A && A.vicio ? `<p class="peq" style="margin-top:8px">Amaneces ${esc(A.nombre.toLowerCase())}: acecha la ${esc(A.vicio)}. Remedio: ${A.remedio.map(esc).join(' y ')} (${esc(A.ref)}).</p>` : ''}
     ${C && C.id!=='ordinario' ? `<p class="peq">${esc(C.nombre)}.</p>` : ''}</div>`;
   s += tarjetaDeseo(h, d);
@@ -551,7 +551,7 @@ function vistaLeer(k){
     if (P.invocacion) s += `<div class="par"><div class="lem rub">${esc(P.invocacion.lem)}</div><div class="es rub"><i>${esc(P.invocacion.es)}</i></div></div>`;
     s += `<div class="titlem">${esc(P.tituloLem||'')}</div><div class="tit">${esc(P.nombre)}${P.id?'. '+esc(P.titulo):''}</div>${banda()}`;
     if (vozDisponible()) s += `<div class="fila" style="justify-content:center;margin-bottom:6px"><button class="btn sec" data-a="vozPars" data-p="${P.id}" data-n="">Escuchar esta parte</button><button class="btn sec" data-a="vozParar">Parar</button></div>`;
-    for (const x of P.pars) s += `<div class="par" id="p-${P.id}-${x.n}"><div class="lem">${esc(x.lem)}</div><div class="es">${x.n>1||P.id===0&&!x.cap?`<span class="num">${x.n}.</span>`:''}${parrafoTexto(x)}</div></div>`;
+    for (const x of P.pars) s += `<div class="par" id="p-${P.id}-${x.n}"><div class="lem">${esc(x.lem)}</div><div class="es">${x.n>1||P.id===0&&!x.cap?`<span class="num">${x.n}.</span>`:''}${parrafoTexto(x)}${vozDisponible()?` <a href="#" class="peq" data-a="vozPars" data-p="${P.id}" data-n="${x.n}" aria-label="Escuchar el parágrafo ${x.n}">▶ escuchar</a>`:''}</div></div>`;
     s += '</div>';
     const ant = P.id>0 ? `<button class="btn sec" data-a="leer" data-v="parte${P.id-1}">‹ ${esc(LIBRO.partes[P.id-1].nombre)}</button>` : '';
     const sig = P.id<7 ? `<button class="btn sec" data-a="leer" data-v="parte${P.id+1}">${esc(LIBRO.partes[P.id+1].nombre)} ›</button>` : '';
@@ -1072,7 +1072,7 @@ comprobarAcidia();
 render();
 splash();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=11').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=12').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;
