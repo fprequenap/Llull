@@ -126,6 +126,9 @@ function tarjetaSituacion(){
         <div class="barra"><i style="width:${pct}%"></i></div><p class="peq">${S.escuderia.dias} de ${DIAS_ESCUDERIA} días superados · armas aprendidas: ${Object.keys(S.armasConocidas).length} de ${ARMAS.length}</p>`;
       if (S.escuderia.dias >= DIAS_ESCUDERIA && e < EDAD_ARMAR) t += `<p>Has cumplido tu año, pero aún no tienes la edad conveniente (${EDAD_ARMAR} años; III, §5).</p>`;
       if (escuderiaCumplida()) t += `<button class="btn" data-a="sub" data-t="hoy" data-v="examen">Presentarse al examen</button>`;
+      const ult = S.examenes[S.examenes.length-1];
+      if (!S.reexUnidades && ult && !ult.aprobado && ult.fecha <= '2026-10-28' && ult.det && ult.det.length && ult.det.every(x => x.startsWith('III, §17')))
+        t += `<div class="aviso" style="margin-top:10px">Tu examen se corrigió con la plancha en segundos, no en minutos. Puedes repetirlo una vez.</div><button class="btn" data-a="reexUnidades">Repetir el examen</button>`;
       return t + '</div>';
     }
     case 'aspirante': {
@@ -195,7 +198,7 @@ function tarjetaDia(h, disc){
   if (d.fisica) {
     const p = d.fisica;
     s += `<div class="prueba" style="margin-top:8px"><div class="txt"><span class="tag v">Prueba física</span><b>${esc(p.nombre)}</b><span>Objetivo: ${esc(fmtObj(p))}${p.unidad==='rep'?' repeticiones':''}</span></div></div>
-      <div class="fila"><input type="number" inputmode="decimal" id="fisval" placeholder="Tu marca (${p.unidad==='min'?'minutos':p.unidad==='s'?'segundos':'repeticiones'})" value="${p.valor??''}" ${d.cerrado?'disabled':''} style="flex:1"><button class="btn sec" data-a="fisica" ${d.cerrado?'disabled':''}>Anotar</button></div>
+      <div class="fila"><input type="text" inputmode="decimal" id="fisval" placeholder="Tu marca (${p.unidad==='min'?'minutos, p. ej. 1,5':'repeticiones'})" value="${p.valor!=null?numES(p.valor):''}" ${d.cerrado?'disabled':''} style="flex:1"><button class="btn sec" data-a="fisica" ${d.cerrado?'disabled':''}>Anotar</button></div>
       ${p.ok!=null ? `<p class="${p.ok?'':'rub'}">${p.ok?'Superada.':'No alcanzada.'}</p>`:''}`;
   }
   if (opc.length) s += `<p style="margin-bottom:2px">Disciplinas practicadas hoy (multiplican la honra):</p><div class="chips">${opc.map(o=>`<button class="chip ${d.opcionales.includes(o.id)?'on':''}" data-a="opc" data-v="${o.id}" ${d.cerrado?'disabled':''}>${esc(o.nombre)} ×${o.mult}</button>`).join('')}</div>`;
@@ -271,9 +274,9 @@ function vistaExamen(){
   } else if (B.paso === 2) {
     const L = pruebasFisicas(e, S.perfil.sexo);
     s += `<div class="card"><p>«El contrahecho, o demasiado grueso, o con otro defecto corporal por el que no pueda usar del oficio, no debe entrar en la Orden de Caballería… sin fuerzas para llevar el arnés.» <span class="ref">III, §17</span></p>
-      <p class="peq">Tabla de tu edad (${FRANJA_NOMBRE[franja(e)]} años${fem()?', baremo femenino':''}), al ${Math.round(cFisico()*100)} %. Anota las marcas que hayas hecho en los últimos siete días; puedes volver a este paso tantas veces como necesites: el examen queda guardado.</p></div>
+      <p class="peq">Tabla de tu edad (${FRANJA_NOMBRE[franja(e)]} años${fem()?', baremo femenino':''}), al ${Math.round(cFisico()*100)} %. Anota las marcas que hayas hecho en los últimos siete días; los tiempos, en minutos con decimales (1,5 = un minuto y medio); puedes volver a este paso tantas veces como necesites: el examen queda guardado.</p></div>
       <div class="card"><table class="tab"><tr><th>Prueba</th><th>Objetivo</th><th>Tu marca</th></tr>
-      ${L.map(p=>`<tr><td>${esc(p.nombre)}</td><td>${esc(fmtObj(p))}</td><td><input type="number" inputmode="decimal" data-f="${p.id}" value="${B.fisico[p.id]??''}" placeholder="${p.unidad==='min'?'min':p.unidad==='s'?'seg':'rep'}" style="min-width:80px"></td></tr>`).join('')}</table></div>
+      ${L.map(p=>`<tr><td>${esc(p.nombre)}</td><td>${esc(fmtObj(p))}</td><td><input type="text" inputmode="decimal" data-f="${p.id}" value="${B.fisico[p.id]!=null?numES(B.fisico[p.id]):''}" placeholder="${p.unidad==='min'?'min':'rep'}" style="min-width:80px"></td></tr>`).join('')}</table></div>
       <div class="fila"><button class="btn sec" data-a="ipaso" data-v="1">Atrás</button><button class="btn sec" data-a="iguardarf">Guardar marcas</button><button class="btn" data-a="ievaluar">Entregar el examen</button></div>`;
   }
   return s;
@@ -281,8 +284,11 @@ function vistaExamen(){
 function resultadoIngreso(R){
   let s = `<h1>Resultado del examen</h1>`;
     s += `<div class="card ${R.aprobado?'oro':'negra'}"><h2>${R.aprobado?'Aprobado':'No aprobado'}</h2>
-      <p>Costumbres: ${Math.round(R.notaMoral*100)} % · Conocimientos: ${Math.round(R.notaQuiz*100)} % · Mínimo: ${Math.round(R.minima*100)} %</p>
-      <table class="tab">${R.fis.map(p=>`<tr><td>${esc(p.nombre)}</td><td>${esc(fmtObj(p))}</td><td>${p.valor??'—'}</td><td>${p.ok?'✔︎':'✘'}</td></tr>`).join('')}</table>
+      <table class="tab"><tr><td>Costumbres y vida</td><td>${Math.round(R.notaMoral*100)} %</td><td>mínimo ${Math.round(R.minima*100)} %</td><td>${R.notaMoral>=R.minima?'✔︎':'✘'}</td></tr>
+      <tr><td>Conocimientos</td><td>${Math.round(R.notaQuiz*100)} %</td><td>mínimo ${Math.round(R.minima*100)} %</td><td>${R.notaQuiz>=R.minima?'✔︎':'✘'}</td></tr>
+      <tr><td>Cuerpo</td><td>${R.fis.filter(p=>p.ok).length} de ${R.fis.length}</td><td>todas</td><td>${R.fis.every(p=>p.ok)?'✔︎':'✘'}</td></tr></table>
+      <h3 style="margin-top:10px">Pruebas físicas</h3>
+      <table class="tab"><tr><th>Prueba</th><th>Objetivo</th><th>Marca</th><th></th></tr>${R.fis.map(p=>`<tr><td>${esc(p.nombre)}</td><td>${esc(fmtObj(p))}</td><td>${p.valor!=null?numES(p.valor)+(p.unidad==='min'?' min':''):'—'}</td><td>${p.ok?'✔︎':'✘'}</td></tr>`).join('')}</table>
       ${R.det.length?`<h3>Faltó</h3><ul>${R.det.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
       <p>${esc(S.historial[0] ? S.historial[0].evento : '')}</p>
       <button class="btn" data-a="finIngreso">Continuar</button></div>`;
@@ -448,7 +454,7 @@ function vistaOrden(){
     s += `<div class="card"><h2>Hacia ${esc(nombreGrado(R.sig))}</h2><h3>Las siete virtudes (VI, §2)</h3><div class="matriz">${R.virt.map(x=>`<span>${esc(x.nombre)}</span><div class="barra"><i style="width:${Math.min(100,x.n/x.req*100)}%"></i></div><span class="peq">${x.n}/${x.req}</span>`).join('')}</div>`;
     if (R.armas) s += `<h3 style="margin-top:12px">Las armas (Parte V)</h3><p class="peq">${R.armas.filter(a=>a.ok).length} de ${R.armas.length} probadas: ${R.armas.filter(a=>!a.ok).map(a=>esc(a.nombre)).join(', ')||'todas'}</p>`;
     if (R.oficios) s += `<h3 style="margin-top:12px">Los oficios (Parte II)</h3><div class="matriz">${R.oficios.map(x=>`<span>${esc(x.nombre.split(' ').slice(0,2).join(' '))}</span><div class="barra"><i style="width:${Math.min(100,x.n/x.req*100)}%"></i></div><span class="peq">${x.n}/${x.req}</span>`).join('')}</div>`;
-    s += `<h3 style="margin-top:12px">El cuerpo</h3><p class="peq">Cada prueba de la tabla, superada desde el último cambio de grado.</p><table class="tab">${pruebasFisicas(e,S.perfil.sexo).map(p=>`<tr><td>${esc(p.nombre)}</td><td>${esc(fmtObj(p))}</td><td>${S.prog.fisico[p.id]?'✔︎':`<input type="number" inputmode="decimal" data-fo="${p.id}" style="width:80px;min-height:36px">`}</td></tr>`).join('')}</table>
+    s += `<h3 style="margin-top:12px">El cuerpo</h3><p class="peq">Cada prueba de la tabla, superada desde el último cambio de grado.</p><table class="tab">${pruebasFisicas(e,S.perfil.sexo).map(p=>`<tr><td>${esc(p.nombre)}</td><td>${esc(fmtObj(p))}</td><td>${S.prog.fisico[p.id]?'✔︎':`<input type="text" inputmode="decimal" data-fo="${p.id}" placeholder="${p.unidad==='min'?'min':'rep'}" style="width:80px;min-height:36px">`}</td></tr>`).join('')}</table>
       <button class="btn sec" data-a="marcasOrden" style="margin-top:6px">Anotar marcas</button>`;
     if (R.examen) s += `<h3 style="margin-top:12px">Examen de condado</h3><p class="peq">Conocimientos al ${Math.round(R.examen.nota*100)} %.</p>${R.examen.aprobado?'<p>✔︎ Aprobado</p>':'<button class="btn" data-a="examenCondado">Hacer el examen</button>'}`;
     s += '</div>';
@@ -607,7 +613,7 @@ const ACC = {
   pr: el => { const d = S.dias[hoy()]; const p = d.pruebas[+el.dataset.i]; const v = el.dataset.v === '1'; p.ok = p.ok === v ? null : v; guardar(); render(); },
   ejer: el => { S.dias[hoy()].ejercicio = el.checked; guardar(); },
   opc: el => { const d = S.dias[hoy()], v = el.dataset.v; d.opcionales = d.opcionales.includes(v) ? d.opcionales.filter(x=>x!==v) : [...d.opcionales, v]; guardar(); render(); },
-  fisica: () => { const d = S.dias[hoy()], v = parseFloat($('#fisval').value); d.fisica.valor = isNaN(v)?null:v; d.fisica.ok = cumple(d.fisica, v); guardar(); render(); },
+  fisica: () => { const d = S.dias[hoy()], v = numero($('#fisval').value); d.fisica.valor = v; d.fisica.ok = cumple(d.fisica, v); guardar(); render(); },
   examenNoche: el => abrirExamenNoche(el.dataset.v),
   nq: el => { const i = +el.dataset.i; TMP.noche.resp[i] = el.dataset.v === '1'; el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); el.classList.add('on'); },
   npr: el => { const d = S.dias[TMP.noche.fecha]; const p = d.pruebas[+el.dataset.i]; p.ok = el.dataset.v === '1'; el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on')); el.classList.add('on'); },
@@ -645,6 +651,7 @@ const ACC = {
     TMP.resIngreso = res; S.borrador = null; guardar();
     go('hoy', 'examen');
   },
+  reexUnidades: () => { S.reexUnidades = true; S.borrador = null; S.situacion = 'nuevo'; S.escuderia = { dias:0, inicio:null }; anotar('Repite el examen de ingreso por la corrección de unidades.'); guardar(); go('hoy','examen'); },
   finIngreso: () => { TMP.resIngreso = null; go('hoy'); },
   fiesta: el => { const F = proximasFiestas(new Date(), 6); señalarFiesta(F[+el.dataset.v]); render(); },
   cambiarFiesta: () => { S.investidura = null; guardar(); render(); },
@@ -701,7 +708,7 @@ const ACC = {
   /* orden */
   marcasOrden: () => {
     const L = pruebasFisicas(edad(), S.perfil.sexo); let n = 0;
-    document.querySelectorAll('[data-fo]').forEach(i => { const p = L.find(x => x.id === i.dataset.fo); if (i.value !== '' && cumple(p, parseFloat(i.value))) { S.prog.fisico[p.id] = true; n++; } });
+    document.querySelectorAll('[data-fo]').forEach(i => { const p = L.find(x => x.id === i.dataset.fo); if (i.value !== '' && cumple(p, i.value)) { S.prog.fisico[p.id] = true; n++; } });
     const a = comprobarAscenso(); guardar(); render();
     toast(a ? `Asciendes a ${nombreGrado()}.` : n ? `${n} prueba(s) superada(s).` : 'Ninguna marca alcanza el objetivo.');
     if (a) splash();
@@ -740,7 +747,7 @@ const ACC = {
   ensayo: () => { ENSAYO = !ENSAYO; S.ajustes.ensayo = ENSAYO; guardar(); render(); },
   borrar: () => { if (!TMP.borrar) { TMP.borrar = true; render(); return; } localStorage.removeItem(CLAVE); location.reload(); }
 };
-function guardarMarcas(){ const B = borrador(); document.querySelectorAll('[data-f]').forEach(i => { B.fisico[i.dataset.f] = i.value === '' ? null : parseFloat(i.value); }); guardar(); }
+function guardarMarcas(){ const B = borrador(); document.querySelectorAll('[data-f]').forEach(i => { B.fisico[i.dataset.f] = numero(i.value); }); guardar(); }
 function descargar(blob, nombre){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
 
 document.addEventListener('click', e => {
@@ -771,7 +778,7 @@ comprobarAcidia();
 render();
 splash();
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=4').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=5').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;

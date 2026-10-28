@@ -37,8 +37,9 @@ function pruebasFisicas(edad, sexo){
   const reps = (base, fac) => Math.ceil(base * (fac||1) * k);
   L.push({ id:'flex', nombre: mayor ? 'Flexiones inclinadas (manos en mesa o banco)' : 'Flexiones seguidas', unidad:'rep', obj: reps(t.flex, fem?0.6:1), tipo:'min' });
   L.push({ id:'sent', nombre: mayor ? 'Sentadillas a silla (levantarse y sentarse)' : 'Sentadillas seguidas', unidad:'rep', obj: reps(t.sent, fem?0.9:1), tipo:'min' });
-  L.push({ id:'plancha', nombre:'Plancha abdominal', unidad:'s', obj: Math.ceil(t.plancha * (fem?0.9:1) * k), tipo:'min' });
-  if (fem && SUSPENSION_F[fr] > 0) L.push({ id:'dom', nombre:'Suspensión en barra', unidad:'s', obj: Math.ceil(SUSPENSION_F[fr]*k), tipo:'min' });
+  const amin = s => Math.ceil(s / 60 * 100) / 100;   // segundos → minutos decimales, redondeo hacia arriba
+  L.push({ id:'plancha', nombre:'Plancha abdominal', unidad:'min', obj: amin(t.plancha * (fem?0.9:1) * k), tipo:'min' });
+  if (fem && SUSPENSION_F[fr] > 0) L.push({ id:'dom', nombre:'Suspensión en barra', unidad:'min', obj: amin(SUSPENSION_F[fr]*k), tipo:'min' });
   else if (!fem && t.dom > 0) L.push({ id:'dom', nombre:'Dominadas', unidad:'rep', obj: reps(t.dom), tipo:'min' });
   const tf = fem ? 1.12 : 1;
   L.push({ id:'carrera', nombre: mayor ? `Marcha a paso vivo, ${t.carrera[0]} km` : `Carrera, ${t.carrera[0]} km`, unidad:'min', obj: Math.floor(t.carrera[1]*tf/k), tipo:'max' });
@@ -47,11 +48,13 @@ function pruebasFisicas(edad, sexo){
   return L;
 }
 function fmtObj(p){
-  if (p.unidad === 's') { const m=Math.floor(p.obj/60), s=p.obj%60; return m ? `${m}:${String(s).padStart(2,'0')}` : `${s} s`; }
-  if (p.unidad === 'min') return `menos de ${p.obj} min`;
+  if (p.unidad === 'min') return (p.tipo === 'max' ? 'menos de ' : 'al menos ') + numES(p.obj) + ' min';
   return `${p.obj}`;
 }
-function cumple(p, valor){ if (valor == null || valor === '' || isNaN(valor)) return false; return p.tipo === 'max' ? Number(valor) <= p.obj : Number(valor) >= p.obj; }
+/* Números con coma o punto decimal (el teclado numérico de Android usa coma) */
+function numero(v){ if (v == null) return null; const n = parseFloat(String(v).trim().replace(',', '.')); return isNaN(n) ? null : n; }
+function numES(n){ return Number(n).toLocaleString('es-ES', { maximumFractionDigits: 2 }); }
+function cumple(p, valor){ const v = numero(valor); if (v == null) return false; return p.tipo === 'max' ? v <= p.obj : v >= p.obj; }
 
 /* Disciplinas opcionales (II, §10) — multiplican la honra del día */
 const OPCIONALES = [
