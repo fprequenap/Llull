@@ -258,3 +258,27 @@ function vistaMusica(){
   s += sec('Tiempos litúrgicos', Object.entries(nombresT).map(([k, n]) => `<h3 style="margin-top:10px">${n}</h3>${lista(MUSICA_TIEMPO[k])}`).join(''));
   return s;
 }
+
+/* ---------- Meditación: enlaces externos ---------- */
+const MEDITACION = [
+  { id:'gch', autor:'Mons. Alberto José González Chaves',
+    d:'Sacerdote de la archidiócesis de Toledo, doctor en Teología Espiritual y Capellán de Su Santidad. Ejercicios espirituales, examen de conciencia, purificación de los sentidos, San Juan de la Cruz, San José… Busca en su canal la charla que necesites.',
+    enlaces:[ ['YouTube', 'https://www.youtube.com/channel/UCFXJpSGIi03O1-o5FP23Omg'],
+              ['Spotify', 'https://open.spotify.com/search/' + encodeURIComponent('Alberto José González Chaves')],
+              ['Su web y sus libros', 'https://www.albertojosegonzalezch.es/'] ] },
+  { id:'gladium', autor:'Gladium et Spes',
+    d:'Audiolibros de Francisco de Paula Requena Paredes.',
+    enlaces:[ ['Spotify', 'https://open.spotify.com/show/0i2L1FSTlNb60sT5vaWxB4'] ] },
+  { id:'vidansj', autor:'Vida de Nuestro Señor Jesucristo',
+    d:'El libro de Francisco de Paula Requena Paredes, leído.',
+    enlaces:[ ['YouTube', 'https://www.youtube.com/@FranciscoRequenaParedes'] ] }
+];
+function enlaceMeditacion(texto){ return `<a href="#" data-a="irMeditacion">${esc(texto || 'Meditación')}</a>`; }
+function vistaMeditacion(){
+  return `<h1>Meditación</h1>
+    <div class="card roja"><p>«Debe ser costumbre del caballero oír misa y sermón, adorar, rogar y temer a Dios.» <span class="ref">VI, §17</span></p>
+      <p class="peq">Para el retiro de cada mes, para combatir una balanza, para el examen o para la vela de armas. Los enlaces abren YouTube o Spotify.</p></div>
+    ${MEDITACION.map(M => `<div class="card"><h2>${esc(M.autor)}</h2><p>${esc(M.d)}</p>
+      <div class="fila">${M.enlaces.map(([n, u]) => `<a class="btn sec" href="${u}" target="_blank" rel="noopener">${esc(n)}</a>`).join('')}</div></div>`).join('')}
+    <div class="card oro"><h3>El retiro de cada mes</h3><p>Coincide con la medición de tus balanzas: dedica ese día un rato largo a la meditación, empezando por el frente que más te cueste.</p></div>`;
+}

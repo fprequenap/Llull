@@ -192,6 +192,16 @@ El espíritu de la Orden de Caballería en todas las épocas. Solo entra lo que 
 - **En las ceremonias y el día:** música para la vela y la investidura, para el examen de la noche y para el ejercicio y la marcha.
 - **Mi cancionero:** cada caballero añade sus piezas y elige a qué ánimo o momento corresponde cada una; aparecen en la música del día. Empieza con «Exploradores», de Loquillo.
 
+## Meditación
+
+Enlaces externos, en Más › Meditación, para que cada uno busque lo que necesite:
+
+- **Mons. Alberto José González Chaves:** su canal de YouTube, su perfil en Spotify y su web (ejercicios espirituales, examen de conciencia, purificación de los sentidos, San Juan de la Cruz…).
+- **Gladium et Spes:** audiolibros de Francisco de Paula Requena Paredes, en Spotify.
+- **Vida de Nuestro Señor Jesucristo:** el libro leído, en YouTube.
+
+Se llega también desde el aviso del retiro mensual (con la medición de las balanzas), desde «Cómo combatir…» en cada balanza, desde el examen de la noche y desde la vela de armas.
+
 ## Uso diario
 
 - **Guía de primer uso:** cuatro pantallas con citas del Libro (la Orden, el día, las balanzas, la caída y la redención). Aparece la primera vez y puede verse de nuevo en Más › Guía de la Orden.

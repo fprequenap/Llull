@@ -87,7 +87,7 @@ function vistaHoy(){
   s += `<div class="card" id="brevDia" data-f="${h}" style="padding:10px 14px"><span class="peq">Breviario Romano…</span></div>`;
   s += tarjetaAniversario();
   if (S.ultimaCopia == null || difDias(S.ultimaCopia, h) > 30) s += `<div class="aviso">Haz una copia de seguridad de tu progreso: si pierdes o cambias el teléfono, se pierde. <a href="#" data-a="sub" data-t="mas" data-v="copia">Hacer copia</a></div>`;
-  if (S.cartaInicial && medicionPendiente() && ['orden','escudero','aspirante','expulsado'].includes(S.situacion)) s += `<div class="aviso">Toca la medición mensual de tus balanzas. <a href="#" data-a="abrirCarta">Medirme ahora</a></div>`;
+  if (S.cartaInicial && medicionPendiente() && ['orden','escudero','aspirante','expulsado'].includes(S.situacion)) s += `<div class="aviso">Toca la medición mensual de tus balanzas y tu retiro del mes. <a href="#" data-a="abrirCarta">Medirme ahora</a> · ${enlaceMeditacion('Meditación')}</div>`;
   s += tarjetaSituacion();
   if (['escudero','aspirante','orden','expulsado'].includes(S.situacion)) s += tarjetaDia(h, disc);
   return s;
@@ -465,7 +465,7 @@ function tarjetaCombate(){
         ${escalaSVG(v,B)}
         <div style="font-size:.86em">
         ${P.objetivo ? `<span style="font-size:.95em">Lucha: <b>${P.hastaZona}</b> pts hasta ${esc(P.objetivo.n.toLowerCase())} (≈${P.noches} ${P.noches===1?'noche limpia':'noches limpias'}) · ${P.hastaMedio} hasta el medio</span><br>` : '<span style="font-size:.95em">En el fiel: guárdalo</span><br>'}
-        ${Z.id!=='virtud' ? `<details style="margin-top:4px"><summary style="cursor:pointer;color:var(--rojo)">Cómo combatir ${esc(ladoNombre(B,v).split(':')[0].toLowerCase())}</summary><ul style="margin:4px 0 0;padding-left:20px">${B[v>0?'exc':'def'].p.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>` : ''}
+        ${Z.id!=='virtud' ? `<details style="margin-top:4px"><summary style="cursor:pointer;color:var(--rojo)">Cómo combatir ${esc(ladoNombre(B,v).split(':')[0].toLowerCase())}</summary><ul style="margin:4px 0 0;padding-left:20px">${B[v>0?'exc':'def'].p.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="peq" style="margin:4px 0 0">Para meditarlo: ${enlaceMeditacion()}</p></details>` : ''}
         <span class="ref">${esc(B.ref)}</span></div></div>`; }).join('')}</div>
     <p class="peq" style="margin-top:8px">Una noche sin falta en esa balanza acerca el fiel 8 puntos; su prueba del día superada, 6 más.</p></div>`;
   return s;
@@ -489,7 +489,7 @@ function abrirExamenNoche(fecha){
   const bals = balanzasDeLaNoche(fecha);
   TMP.noche = { fecha, qs, resp: qs.map(()=>null), bals, bal:{}, espiritu:null };
   modal(`<h2>Examen de la noche</h2><p class="peq">${esc(deISO(fecha).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}))}</p>${S.perfil.padrino ? `<p><i>¿Qué diría ${esc(S.perfil.padrino)} de tu día?</i></p>` : ''}
-    <details class="card plegable"><summary>Música para el examen</summary>${filaPieza('telucis', 'Completas')}${filaPieza(antifonaMariana(deISO(fecha)), 'antífona de la noche')}${propiasDe(['noche']).map(x => filaPropia(x, 'tuya')).join('')}</details>
+    <details class="card plegable"><summary>Música para el examen</summary>${filaPieza('telucis', 'Completas')}${filaPieza(antifonaMariana(deISO(fecha)), 'antífona de la noche')}${propiasDe(['noche']).map(x => filaPropia(x, 'tuya')).join('')}<p class="peq">Para un examen más hondo: ${enlaceMeditacion()}</p></details>
     <div class="card roja"><p><b>¿Me dejé gobernar hoy por el Espíritu Santo, o por mis gustos?</b> ${d.deseo?`<br><span class="peq">Esta mañana deseaste: «${esc(d.deseo)}»</span>`:''}</p>
       <div class="chips"><button class="chip" data-a="nesp" data-v="si">Por el Espíritu</button><button class="chip" data-a="nesp" data-v="medias">A medias</button><button class="chip" data-a="nesp" data-v="no">Por mis gustos</button></div></div>
     <h3>Las balanzas</h3><p class="peq">Hoy…</p>${bals.map(id=>{ const B = BALANZAS.find(x=>x.id===id); return `<div class="card"><b>${esc(B.nombre)}</b> <span class="ref">${esc(B.ref)}</span>
@@ -574,7 +574,7 @@ function vistaInvestidura(){
     const hecho = !!paso[p.id];
     let accion = '';
     if (!hecho && hab) {
-      if (p.id === 'vela') accion = `<button class="btn sec" data-a="vela">Comenzar la vela</button><details class="plegable" style="margin-top:8px"><summary>Música para la vela</summary>${lista(MUSICA_MOMENTO.vela)}${propiasDe(['vela']).map(x => filaPropia(x, 'tuya')).join('')}</details>`;
+      if (p.id === 'vela') accion = `<button class="btn sec" data-a="vela">Comenzar la vela</button><details class="plegable" style="margin-top:8px"><summary>Música para la vela</summary>${lista(MUSICA_MOMENTO.vela)}${propiasDe(['vela']).map(x => filaPropia(x, 'tuya')).join('')}</details><p class="peq" style="margin-top:6px">Para la vela: ${enlaceMeditacion()}</p>`;
       else if (p.id === 'juramento') accion = `<div class="card" style="background:#fff"><p><i>${esc(JURAMENTO)}</i></p></div><button class="btn" data-a="pasoInv" data-v="juramento">Lo juro</button>`;
       else if (p.id === 'ceremonia') accion = ceremoniaHTML() + `<details class="plegable" style="margin-top:8px"><summary>Música para la investidura</summary>${lista(MUSICA_MOMENTO.investidura)}${propiasDe(['investidura']).map(x => filaPropia(x, 'tuya')).join('')}</details>`;
       else if (p.id === 'armas') accion = S.blason ? `<p>Tus armas, abatidas por tu caída, te son restituidas.</p><div class="logro">${logroSVG(S.blason,1,null)}</div><button class="btn" data-a="pasoInv" data-v="armas">Recibir mis armas</button>` : `<button class="btn" data-a="sub" data-t="armas" data-v="constructor">Componer mis armas</button>`;
@@ -762,12 +762,13 @@ function vistaReglas(){
    ===================================================================== */
 function vistaMas(){
   const sub = RUTA.sub;
-  const V = { ejercicios:vistaEjercicios, nutricion:vistaNutricion, calendario:vistaCalendario, virtudes:vistaVirtudes, confesion:vistaConfesion, musica:vistaMusica, avisos:vistaAvisos, copia:vistaCopia, ajustes:vistaAjustes, acerca:vistaAcerca }[sub];
+  const V = { ejercicios:vistaEjercicios, nutricion:vistaNutricion, calendario:vistaCalendario, virtudes:vistaVirtudes, confesion:vistaConfesion, musica:vistaMusica, meditacion:vistaMeditacion, avisos:vistaAvisos, copia:vistaCopia, ajustes:vistaAjustes, acerca:vistaAcerca }[sub];
   if (V) return `<button class="btn sec" data-a="tab" data-v="mas">‹ Más</button>` + V();
   return `<h1>Más</h1><div class="card lista">
     <a href="#" data-a="sub" data-t="mas" data-v="ejercicios"><b>Ejercicios</b><br><span class="peq">Rutinas para mantener la forma, según tu edad y tu grado</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="nutricion"><b>Nutrición</b><br><span class="peq">La templanza en la mesa (VI, §§9, 16)</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="calendario"><b>Calendario</b><br><span class="peq">Fiestas de precepto, ayunos y abstinencias</span></a>
+    <a href="#" data-a="sub" data-t="mas" data-v="meditacion"><b>Meditación</b><br><span class="peq">Mons. González Chaves · Gladium et Spes · Vida de Nuestro Señor Jesucristo</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="musica"><b>Música</b><br><span class="peq">El espíritu de la Orden en todas las épocas · Mi cancionero</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="virtudes"><b>Virtudes y vicios</b><br><span class="peq">Parte VI</span></a>
     <a href="#" data-a="verGuia"><b>Guía de la Orden</b><br><span class="peq">Cómo funciona la app, en cuatro pantallas</span></a>
@@ -977,6 +978,7 @@ const ACC = {
   guia: el => abrirGuia(+el.dataset.v),
   finGuia: () => { S.guiaVista = true; guardar(); cerrarModal(); },
   verGuia: () => abrirGuia(0),
+  irMeditacion: () => { cerrarModal(); cerrarCita(); go('mas', 'meditacion'); },
   plataforma: el => { S.ajustes.plataforma = el.dataset.v; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); },
   npV: el => { const N = TMP.nuevaPieza = TMP.nuevaPieza || { t:'', c:'', v:[] }; N.t = ($('#npT')||{}).value || N.t; N.c = ($('#npC')||{}).value || N.c; const v = el.dataset.v; N.v = N.v.includes(v) ? N.v.filter(x => x !== v) : [...N.v, v]; const y = window.scrollY; render(); window.scrollTo(0, y); },
   npAdd: () => {
@@ -1190,7 +1192,7 @@ asegurarPersistencia();
 avisoCopiaAlAbrir();
 if (!S.guiaVista) setTimeout(() => { if (!document.getElementById('modal')) abrirGuia(0); }, S.perfil ? 2700 : 400);
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=17').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=18').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;
