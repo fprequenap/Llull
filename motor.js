@@ -36,7 +36,8 @@ function estadoNuevo(){
     usadas:{},                   // año → índices de divisas usadas
     ultimoExamenNoche:null,
     historial:[],
-    ajustes:{ tam:19, columnas:'ambas', horaManana:'07:00', horaNoche:'22:00' },
+    ajustes:{ tam:19, columnas:'ambas', horaManana:'07:00', horaNoche:'22:00', plataforma:'spotify' },
+    cancionero: (typeof cancioneroInicial === 'function' ? cancioneroInicial() : []),
     ultimaCopia:null,
     balanzas:{},                 // id → posición del fiel (−100 defecto … +100 exceso)
     rojos:0,                     // veces que una balanza ha llegado al rojo desde el último cambio de grado

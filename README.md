@@ -182,6 +182,16 @@ En Más › Ajustes se puede añadir una foto del rostro: se encuadra con el ded
 - **Lámina de investidura:** imagen para compartir el día de la investidura (IV, §12), con el retrato, las armas, el grado, la fiesta, la fecha, el padrino y el blasonado. En Mis armas, «Lámina de mi grado» genera la del grado actual.
 - Los estados de caída y deshonor nunca se aplican al rostro: solo a las armas.
 
+## Música
+
+El espíritu de la Orden de Caballería en todas las épocas. Solo entra lo que encarna el Código: una virtud, un oficio o un momento del camino del caballero; de cada obra, solo la pieza que encaja. Cada pieza abre la búsqueda en la plataforma elegida (Spotify, Apple Music o YouTube Music), como en Paz Interior; no hay audio dentro de la app.
+
+- **El eje, *Excalibur*:** la película cuenta el camino del Código y su música marca los grandes momentos: vela de armas (*Parsifal*, preludio), investidura (Trevor Jones), ascenso y batalla («O Fortuna»), caída (*Tristán*, preludio), penitencia y redención (*Parsifal*, Viernes Santo), expulsión y difuntos (marcha fúnebre de Sigfrido).
+- **Épocas:** gregoriano; *Cantigas*, *Códice Calixtino*, *Llibre Vermell*, *Cant de la Sibil·la*; polifonía (*L'homme armé*, Morales, Victoria, Guerrero, Allegri); barroco (Monteverdi, Händel, Purcell); Wagner, Orff (solo «O Fortuna» y «Fortune plango vulnera»), Strauss, Falla, Prokófiev; cine (Doyle, Rózsa, Shore, Morricone, Kamen); «La muerte no es el final».
+- **Música del día** (Hoy, plegada): una pieza por ánimo, siete por ánimo en rotación semanal mezclando épocas; otra por la circunstancia; la del tiempo litúrgico y la del santo caballero; Laudes por la mañana y, por la noche, Completas con la antífona mariana del tiempo. Y las del contexto: vela, investidura, ascenso, caída o penitencia.
+- **En las ceremonias y el día:** música para la vela y la investidura, para el examen de la noche y para el ejercicio y la marcha.
+- **Mi cancionero:** cada caballero añade sus piezas y elige a qué ánimo o momento corresponde cada una; aparecen en la música del día. Empieza con «Exploradores», de Loquillo.
+
 ## Uso diario
 
 - **Guía de primer uso:** cuatro pantallas con citas del Libro (la Orden, el día, las balanzas, la caída y la redención). Aparece la primera vez y puede verse de nuevo en Más › Guía de la Orden.
@@ -344,6 +354,7 @@ El blasón aparece al abrir la aplicación y en *Mis armas*, y puede compartirse
 | `blason.js` | Heráldica: dibujo SVG, regla de esmaltes y blasonado |
 | `arnes.js` | Mi arnés: el escudero y el caballero armado, con el estado de cada pieza |
 | `retrato.js` | Mi retrato: recorte, medallón y lámina de investidura |
+| `musica.js` | Música: catálogo, rotación, Mi cancionero |
 | `cronica.js` | Protección de datos, Breviario, aniversario, lámina del año, crónica y confesión |
 | `data.js` | Texto íntegro del Libro y las 365 divisas |
 | `sw.js` | Service worker: funcionamiento sin conexión y actualización |

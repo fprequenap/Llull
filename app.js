@@ -223,7 +223,8 @@ function tarjetaDia(h, disc){
   const hn = parseInt((S.ajustes.horaNoche || '22:00').split(':')[0], 10);
   const noche = new Date().getHours() >= Math.min(19, hn - 3);
   const arnes = ['escudero','aspirante','orden','expulsado'].includes(S.situacion) ? `<details class="card plegable"><summary>Mi arnés · <span class="peq">toca para verlo</span></summary>${tarjetaArnes(true).replace(/^<div class="card">/, '<div>')}</details>` : '';
-  const orden = (noche || d.cerrado) ? [cDivisa, cPend, cExamen, cPruebas, cDeseo, cCuerpo, cMesa, arnes] : [cDivisa, cPend, cDeseo, cPruebas, cCuerpo, cMesa, cExamen, arnes];
+  const cMusica = tarjetaMusica(h, d);
+  const orden = (noche || d.cerrado) ? [cDivisa, cPend, cExamen, cPruebas, cDeseo, cMusica, cCuerpo, cMesa, arnes] : [cDivisa, cPend, cDeseo, cPruebas, cMusica, cCuerpo, cMesa, cExamen, arnes];
   return orden.join('');
 }
 function pendienteAyer(){
@@ -488,6 +489,7 @@ function abrirExamenNoche(fecha){
   const bals = balanzasDeLaNoche(fecha);
   TMP.noche = { fecha, qs, resp: qs.map(()=>null), bals, bal:{}, espiritu:null };
   modal(`<h2>Examen de la noche</h2><p class="peq">${esc(deISO(fecha).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}))}</p>${S.perfil.padrino ? `<p><i>¿Qué diría ${esc(S.perfil.padrino)} de tu día?</i></p>` : ''}
+    <details class="card plegable"><summary>Música para el examen</summary>${filaPieza('telucis', 'Completas')}${filaPieza(antifonaMariana(deISO(fecha)), 'antífona de la noche')}${propiasDe(['noche']).map(x => filaPropia(x, 'tuya')).join('')}</details>
     <div class="card roja"><p><b>¿Me dejé gobernar hoy por el Espíritu Santo, o por mis gustos?</b> ${d.deseo?`<br><span class="peq">Esta mañana deseaste: «${esc(d.deseo)}»</span>`:''}</p>
       <div class="chips"><button class="chip" data-a="nesp" data-v="si">Por el Espíritu</button><button class="chip" data-a="nesp" data-v="medias">A medias</button><button class="chip" data-a="nesp" data-v="no">Por mis gustos</button></div></div>
     <h3>Las balanzas</h3><p class="peq">Hoy…</p>${bals.map(id=>{ const B = BALANZAS.find(x=>x.id===id); return `<div class="card"><b>${esc(B.nombre)}</b> <span class="ref">${esc(B.ref)}</span>
@@ -572,9 +574,9 @@ function vistaInvestidura(){
     const hecho = !!paso[p.id];
     let accion = '';
     if (!hecho && hab) {
-      if (p.id === 'vela') accion = `<button class="btn sec" data-a="vela">Comenzar la vela</button>`;
+      if (p.id === 'vela') accion = `<button class="btn sec" data-a="vela">Comenzar la vela</button><details class="plegable" style="margin-top:8px"><summary>Música para la vela</summary>${lista(MUSICA_MOMENTO.vela)}${propiasDe(['vela']).map(x => filaPropia(x, 'tuya')).join('')}</details>`;
       else if (p.id === 'juramento') accion = `<div class="card" style="background:#fff"><p><i>${esc(JURAMENTO)}</i></p></div><button class="btn" data-a="pasoInv" data-v="juramento">Lo juro</button>`;
-      else if (p.id === 'ceremonia') accion = ceremoniaHTML();
+      else if (p.id === 'ceremonia') accion = ceremoniaHTML() + `<details class="plegable" style="margin-top:8px"><summary>Música para la investidura</summary>${lista(MUSICA_MOMENTO.investidura)}${propiasDe(['investidura']).map(x => filaPropia(x, 'tuya')).join('')}</details>`;
       else if (p.id === 'armas') accion = S.blason ? `<p>Tus armas, abatidas por tu caída, te son restituidas.</p><div class="logro">${logroSVG(S.blason,1,null)}</div><button class="btn" data-a="pasoInv" data-v="armas">Recibir mis armas</button>` : `<button class="btn" data-a="sub" data-t="armas" data-v="constructor">Componer mis armas</button>`;
       else if (p.id === 'mostrarse') accion = `${retratoURL() ? '' : '<p class="peq">Si añades tu retrato en Más › Ajustes, aparecerá en la lámina.</p>'}<div class="fila"><button class="btn" data-a="laminaInvestidura">Compartir la lámina de investidura</button><button class="btn sec" data-a="compartir">Solo mis armas</button><button class="btn sec" data-a="pasoInv" data-v="mostrarse">Hecho</button></div>`;
       else if (p.id === 'dadivas') accion = `<label class="campo"><span>¿Qué dádiva has repartido?</span><input type="text" id="dadiva" maxlength="120"></label><button class="btn" data-a="dadiva">Anotar y terminar</button>`;
@@ -760,12 +762,13 @@ function vistaReglas(){
    ===================================================================== */
 function vistaMas(){
   const sub = RUTA.sub;
-  const V = { ejercicios:vistaEjercicios, nutricion:vistaNutricion, calendario:vistaCalendario, virtudes:vistaVirtudes, confesion:vistaConfesion, avisos:vistaAvisos, copia:vistaCopia, ajustes:vistaAjustes, acerca:vistaAcerca }[sub];
+  const V = { ejercicios:vistaEjercicios, nutricion:vistaNutricion, calendario:vistaCalendario, virtudes:vistaVirtudes, confesion:vistaConfesion, musica:vistaMusica, avisos:vistaAvisos, copia:vistaCopia, ajustes:vistaAjustes, acerca:vistaAcerca }[sub];
   if (V) return `<button class="btn sec" data-a="tab" data-v="mas">‹ Más</button>` + V();
   return `<h1>Más</h1><div class="card lista">
     <a href="#" data-a="sub" data-t="mas" data-v="ejercicios"><b>Ejercicios</b><br><span class="peq">Rutinas para mantener la forma, según tu edad y tu grado</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="nutricion"><b>Nutrición</b><br><span class="peq">La templanza en la mesa (VI, §§9, 16)</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="calendario"><b>Calendario</b><br><span class="peq">Fiestas de precepto, ayunos y abstinencias</span></a>
+    <a href="#" data-a="sub" data-t="mas" data-v="musica"><b>Música</b><br><span class="peq">El espíritu de la Orden en todas las épocas · Mi cancionero</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="virtudes"><b>Virtudes y vicios</b><br><span class="peq">Parte VI</span></a>
     <a href="#" data-a="verGuia"><b>Guía de la Orden</b><br><span class="peq">Cómo funciona la app, en cuatro pantallas</span></a>
     <a href="#" data-a="sub" data-t="mas" data-v="confesion"><b>Preparar la confesión</b><br><span class="peq">Mandamientos, pecados y deberes del oficio (IV, §1)</span></a>
@@ -786,6 +789,7 @@ function vistaEjercicios(){
     s += `<div class="card oro"><h3>Calentamiento (5 min)</h3>${L(R.calentamiento)}<h3>Bloque principal</h3><p class="peq">${esc(R.formato)}</p>${L(R.principal)}<h3>Vuelta a la calma (5 min)</h3>${L(R.vuelta)}
       <p class="peq">Dosis ajustada a tu edad (${Math.round(coefFisico(e)*100)} %)${sx==='f'?' y baremo femenino':''}. Ante dolor o mareo, para.</p></div>`;
   }
+  s += `<details class="card plegable"><summary>Música para el ejercicio y la marcha</summary>${lista(MUSICA_MOMENTO.ejercicio)}${propiasDe(['ejercicio','batalla']).map(x => filaPropia(x, 'tuya')).join('')}</details>`;
   s += `<div class="card"><h3>Plan semanal orientativo</h3><table class="tab">${planSemanal(e).map((t,i)=>`<tr><td>${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'][i]}</td><td>${esc(t)}</td></tr>`).join('')}</table></div>
     <div class="card"><h3>Tu tabla física</h3><p class="peq">${FRANJA_NOMBRE[franja(e)]} años${sx==='f'?', baremo femenino':''}, al ${Math.round(coefFisico(e)*100)} %.</p><table class="tab">${pruebasFisicas(e,sx).map(p=>`<tr><td>${esc(p.nombre)}</td><td>${esc(fmtObj(p))}</td></tr>`).join('')}</table></div>`;
   return s;
@@ -838,6 +842,7 @@ function vistaAjustes(){
   const A = S.ajustes, e = S.perfil ? edad() : 30;
   const disp = opcionalesDisponibles(e), mias = S.perfil ? (S.perfil.opcionales||[]) : [];
   return `<h1>Ajustes</h1>
+    <div class="card"><h3>Música</h3><p class="peq">Plataforma en la que se abren las piezas.</p><div class="chips">${Object.entries(PLATAFORMAS).map(([k, p]) => `<button class="chip ${(S.ajustes.plataforma||'spotify')===k?'on':''}" data-a="plataforma" data-v="${k}">${p.n}</button>`).join('')}</div></div>
     ${S.perfil ? `<div class="card"><h3>Mi retrato</h3>
       ${retratoURL() ? `<div class="cen">${medallonSVG(150)}</div>
         <div class="chips" style="justify-content:center"><button class="chip ${S.perfil.estiloRetrato!=='natural'?'on':''}" data-a="estiloRetrato" data-v="ilustrado">Ilustrado</button><button class="chip ${S.perfil.estiloRetrato==='natural'?'on':''}" data-a="estiloRetrato" data-v="natural">Foto natural</button></div>` : '<p>Tu rostro aparecerá en el medallón, en tu figura de escudero y en la lámina de investidura.</p>'}
@@ -972,6 +977,17 @@ const ACC = {
   guia: el => abrirGuia(+el.dataset.v),
   finGuia: () => { S.guiaVista = true; guardar(); cerrarModal(); },
   verGuia: () => abrirGuia(0),
+  plataforma: el => { S.ajustes.plataforma = el.dataset.v; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); },
+  npV: el => { const N = TMP.nuevaPieza = TMP.nuevaPieza || { t:'', c:'', v:[] }; N.t = ($('#npT')||{}).value || N.t; N.c = ($('#npC')||{}).value || N.c; const v = el.dataset.v; N.v = N.v.includes(v) ? N.v.filter(x => x !== v) : [...N.v, v]; const y = window.scrollY; render(); window.scrollTo(0, y); },
+  npAdd: () => {
+    const N = TMP.nuevaPieza || { v:[] }, t = ($('#npT').value || '').trim(), c = ($('#npC').value || '').trim();
+    if (!t) return toast('Escribe el título de la pieza.');
+    if (!N.v || !N.v.length) return toast('Elige al menos un ánimo o momento.');
+    S.cancionero = S.cancionero || [];
+    S.cancionero.push({ id:'c' + Date.now().toString(36), t, c, v:[...N.v] });
+    TMP.nuevaPieza = null; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); toast('Añadida a Mi cancionero.');
+  },
+  borrarPropia: el => { const id = el.dataset.v; if (TMP.borrarPropia !== id) { TMP.borrarPropia = id; const y = window.scrollY; render(); window.scrollTo(0, y); return; } TMP.borrarPropia = null; S.cancionero = (S.cancionero || []).filter(x => x.id !== id); guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); },
   finIngreso: () => { TMP.resIngreso = null; go('hoy'); },
   fiesta: el => { const F = proximasFiestas(new Date(), 6); señalarFiesta(F[+el.dataset.v]); render(); },
   cambiarFiesta: () => { S.investidura = null; guardar(); render(); },
@@ -1174,7 +1190,7 @@ asegurarPersistencia();
 avisoCopiaAlAbrir();
 if (!S.guiaVista) setTimeout(() => { if (!document.getElementById('modal')) abrirGuia(0); }, S.perfil ? 2700 : 400);
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=16').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=17').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;
