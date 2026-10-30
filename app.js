@@ -989,6 +989,25 @@ const ACC = {
     S.cancionero.push({ id:'c' + Date.now().toString(36), t, c, v:[...N.v] });
     TMP.nuevaPieza = null; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); toast('Añadida a Mi cancionero.');
   },
+  impPegar: () => { const t = ($('#impTxt') || {}).value || ''; if (!t.trim()) return toast('Pega primero la lista.'); prepararImport(t); const y = window.scrollY; render(); window.scrollTo(0, y); },
+  impSel: el => { const x = TMP.imp && TMP.imp.items[+el.dataset.v]; if (x) x.sel = !x.sel; const y = window.scrollY; render(); window.scrollTo(0, y); },
+  impTodas: el => { (TMP.imp ? TMP.imp.items : []).forEach(x => x.sel = el.dataset.v === '1'); const y = window.scrollY; render(); window.scrollTo(0, y); },
+  impVer: () => { TMP.imp.ver = true; const y = window.scrollY; render(); window.scrollTo(0, y); },
+  impV: el => { const I = TMP.imp, v = el.dataset.v; I.v = I.v.includes(v) ? I.v.filter(x => x !== v) : [...I.v, v]; const y = window.scrollY; render(); window.scrollTo(0, y); },
+  impNo: () => { TMP.imp = null; const y = window.scrollY; render(); window.scrollTo(0, y); },
+  impAdd: () => {
+    const I = TMP.imp; if (!I) return;
+    const sel = I.items.filter(x => x.sel);
+    if (!sel.length) return toast('No hay ninguna canción marcada.');
+    if (!I.v.length) return toast('Elige al menos un ánimo o momento.');
+    S.cancionero = S.cancionero || [];
+    const base = Date.now().toString(36);
+    sel.forEach((x, k) => S.cancionero.push({ id:'c' + base + k.toString(36), t:x.t, c:x.c, v:[...I.v] }));
+    TMP.imp = null; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); toast(`${sel.length} añadidas a Mi cancionero.`);
+  },
+  verCan: () => { TMP.verCan = true; const y = window.scrollY; render(); window.scrollTo(0, y); },
+  editPropia: el => { TMP.editPropia = TMP.editPropia === el.dataset.v ? null : el.dataset.v; const y = window.scrollY; render(); window.scrollTo(0, y); },
+  pvV: el => { const x = (S.cancionero || []).find(z => z.id === el.dataset.id); if (!x) return; const v = el.dataset.v; x.v = (x.v || []).includes(v) ? x.v.filter(z => z !== v) : [...(x.v || []), v]; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); },
   borrarPropia: el => { const id = el.dataset.v; if (TMP.borrarPropia !== id) { TMP.borrarPropia = id; const y = window.scrollY; render(); window.scrollTo(0, y); return; } TMP.borrarPropia = null; S.cancionero = (S.cancionero || []).filter(x => x.id !== id); guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); },
   finIngreso: () => { TMP.resIngreso = null; go('hoy'); },
   fiesta: el => { const F = proximasFiestas(new Date(), 6); señalarFiesta(F[+el.dataset.v]); render(); },
@@ -1108,6 +1127,11 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
+  if (el.id === 'fcan' && el.files && el.files[0]) {
+    const r = new FileReader();
+    r.onload = () => { prepararImport(textoDeArchivo(r.result)); if (!TMP.imp.items.length && !TMP.imp.repetidas) toast('No encuentro canciones en ese archivo.'); const y = window.scrollY; render(); window.scrollTo(0, y); };
+    r.readAsArrayBuffer(el.files[0]); el.value = ''; return;
+  }
   if (el.id === 'fret' && el.files && el.files[0]) { abrirRecorte(el.files[0]); el.value = ''; return; }
   if (el.dataset && el.dataset.a === 'vozModo') { S.ajustes.voz = el.value; guardar(); document.querySelectorAll('select[data-a=vozModo]').forEach(x => x.value = el.value); return; }
   if (el.dataset && el.dataset.a === 'evo') { TMP.evo = el.value; const y = window.scrollY; render(); window.scrollTo(0, y); return; }
@@ -1192,7 +1216,7 @@ asegurarPersistencia();
 avisoCopiaAlAbrir();
 if (!S.guiaVista) setTimeout(() => { if (!document.getElementById('modal')) abrirGuia(0); }, S.perfil ? 2700 : 400);
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=18').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=19').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;

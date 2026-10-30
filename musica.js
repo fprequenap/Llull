@@ -177,7 +177,65 @@ function filaPropia(x, motivo){
     <div class="txt"><b>${esc(x.t)}</b><span class="peq">${esc(x.c)} · <span class="tag v">Mi cancionero</span>${motivo ? ` · ${esc(motivo)}` : ''}</span></div></div>`;
 }
 function lista(ids, motivo){ return ids.map(id => filaPieza(id, motivo)).join(''); }
-function propiasDe(vinc){ return (S.cancionero || []).filter(x => (x.v || []).some(v => vinc.includes(v))); }
+/* las propias que corresponden; si son muchas, rotan cada día (máx. 3 a la vez) */
+function propiasDe(vinc, max = 3){
+  const L = (S.cancionero || []).filter(x => (x.v || []).some(v => vinc.includes(v)));
+  if (L.length <= max) return L;
+  const o = (diaDelAno(new Date()) * max) % L.length;
+  return [...L.slice(o), ...L.slice(0, o)].slice(0, max);
+}
+
+/* ---------- importar una lista (CSV de Exportify, u otra lista pegada) ---------- */
+function filasCSV(txt){
+  const F = []; let f = [], c = '', q = false;
+  txt = txt.replace(/^\uFEFF/, '');
+  const sep = (() => { const l = txt.split(/\r?\n/)[0] || ''; return (l.split(';').length > l.split(',').length) ? ';' : (l.includes('\t') ? '\t' : ','); })();
+  for (let i = 0; i < txt.length; i++) {
+    const ch = txt[i];
+    if (q) { if (ch === '"') { if (txt[i+1] === '"') { c += '"'; i++; } else q = false; } else c += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === sep) { f.push(c); c = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && txt[i+1] === '\n') i++; f.push(c); F.push(f); f = []; c = ''; }
+    else c += ch;
+  }
+  if (c || f.length) { f.push(c); F.push(f); }
+  return F.filter(r => r.some(x => x.trim()));
+}
+function normCan(t, c){ return `${t}|${c}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9|]/g, ''); }
+function autores(a){ return (a || '').split(/\s*[,;]\s*/).filter(Boolean).slice(0, 2).join(', '); }
+/* devuelve { items:[{t,c}], enlaces:n } */
+function leerLista(txt){
+  const out = [], vistos = new Set(); let enlaces = 0;
+  const pon = (t, c) => { t = (t || '').trim().slice(0, 80); c = autores(c).slice(0, 60); if (!t) return; const k = normCan(t, c); if (vistos.has(k)) return; vistos.add(k); out.push({ t, c }); };
+  const F = filasCSV(txt);
+  const cab = (F[0] || []).map(x => x.trim().toLowerCase());
+  const it = cab.findIndex(x => /^(track name|track|name|title|t[ií]tulo|canci[oó]n|nombre)$/.test(x));
+  const ia = cab.findIndex(x => /^(artist name\(s\)|artist names?|artists?|artista\(s\)|artistas?|autor|int[eé]rprete)$/.test(x));
+  if (it >= 0 && F.length > 1) { F.slice(1).forEach(r => pon(r[it], ia >= 0 ? r[ia] : '')); return { items: out, enlaces }; }
+  // lista pegada: una canción por línea, «Título — Autor»
+  for (let l of txt.split(/\r?\n/)) {
+    l = l.trim().replace(/^\d+[.)]\s*/, ''); if (!l) continue;
+    if (/^https?:\/\//.test(l)) { enlaces++; continue; }
+    const m = l.split(/\s+[—–-]\s+|\t/);
+    if (m.length >= 2) pon(m[0], m.slice(1).join(' ')); else pon(l, '');
+  }
+  return { items: out, enlaces };
+}
+/* UTF-8 o UTF-16 (la exportación de texto de Apple Music / iTunes viene en UTF-16) */
+function textoDeArchivo(buf){
+  const b = new Uint8Array(buf);
+  if (b[0] === 0xFF && b[1] === 0xFE) return new TextDecoder('utf-16le').decode(b);
+  if (b[0] === 0xFE && b[1] === 0xFF) return new TextDecoder('utf-16be').decode(b);
+  let ceros = 0; for (let i = 1; i < Math.min(b.length, 400); i += 2) if (b[i] === 0) ceros++;
+  if (b.length > 4 && ceros > Math.min(b.length, 400) / 4) return new TextDecoder('utf-16le').decode(b);
+  const u = new TextDecoder('utf-8').decode(b);
+  return u.includes('\uFFFD') ? new TextDecoder('windows-1252').decode(b) : u;
+}
+function prepararImport(txt){
+  const R = leerLista(txt), ya = new Set((S.cancionero || []).map(x => normCan(x.t, x.c)));
+  const items = R.items.filter(x => !ya.has(normCan(x.t, x.c))).slice(0, 1000).map(x => ({ ...x, sel:true }));
+  TMP.imp = { items, v:[], repetidas: R.items.length - items.length, enlaces: R.enlaces, ver:false };
+}
 
 /* ---------- la música del día ---------- */
 function semanaDelAno(d){ return Math.floor(diaDelAno(d) / 7); }
@@ -233,17 +291,41 @@ function vistaMusica(){
       <p class="peq">Cada pieza abre la búsqueda en la plataforma que elijas.</p>
       <div class="chips">${Object.entries(PLATAFORMAS).map(([k, p]) => `<button class="chip ${plat===k?'on':''}" data-a="plataforma" data-v="${k}">${p.n}</button>`).join('')}</div></div>`;
   // Mi cancionero
-  const C = S.cancionero || [];
-  s += sec('Mi cancionero', `<p class="peq">Tus propias piezas: elige a qué ánimo o momento corresponde cada una, y aparecerán en la música del día.</p>
-    ${C.length ? C.map(x => `<div class="prueba"><a class="btn sec" style="min-width:44px;padding:0 12px" href="${urlPieza(x.t, x.c)}" target="_blank" rel="noopener">▶</a>
-      <div class="txt"><b>${esc(x.t)}</b><span class="peq">${esc(x.c)}</span><br><span class="peq">${(x.v||[]).map(v => esc((VINCULOS.find(z => z[0]===v)||[,v])[1])).join(' · ') || 'sin vínculo'}</span></div>
+  const C = S.cancionero || [], verC = TMP.verCan ? C : C.slice(0, 25);
+  const nomV = v => (VINCULOS.find(z => z[0]===v) || [,v])[1];
+  const chipsV = (sel, accion, extra) => `<div class="chips">${VINCULOS.map(([k, n]) => `<button class="chip ${sel.includes(k)?'on':''}" data-a="${accion}" data-v="${k}"${extra||''}>${esc(n)}</button>`).join('')}</div>`;
+  const I = TMP.imp;
+  let imp;
+  if (!I) imp = `<p class="peq">Desde Spotify: abre <a href="https://exportify.net" target="_blank" rel="noopener">exportify.net</a>, entra con tu cuenta, pulsa <b>Export</b> junto a la lista (o junto a «Canciones que te gustan») y elige aquí el archivo CSV descargado. En el Mac, Apple Music exporta una lista con Archivo › Biblioteca › Exportar lista (texto); en iPhone, o para YouTube Music, sirve <a href="https://www.tunemymusic.com" target="_blank" rel="noopener">tunemymusic.com</a> (destino «Archivo», CSV). Sirve cualquier CSV con columnas de título y artista.</p>
+    <label class="btn sec" style="cursor:pointer">Elegir archivo (CSV o texto)<input type="file" id="fcan" accept=".csv,text/csv,.txt,text/plain" style="display:none"></label>
+    <p class="peq" style="margin:10px 0 4px">O pega la lista, una canción por línea: <i>Título — Autor</i></p>
+    <textarea id="impTxt" rows="4" style="width:100%" placeholder="Exploradores — Loquillo"></textarea>
+    <button class="btn sec" data-a="impPegar">Leer la lista pegada</button>`;
+  else {
+    const n = I.items.filter(x => x.sel).length, verI = I.ver ? I.items : I.items.slice(0, 30);
+    imp = `<p><b>${I.items.length}</b> canciones leídas${I.repetidas ? ` · ${I.repetidas} ya estaban o repetidas` : ''}${I.enlaces ? ` · ${I.enlaces} enlaces sin título omitidos (usa Exportify)` : ''}.</p>
+      ${I.items.length ? `<p class="peq">Quita las que no encajen con el Código. Luego elige a qué ánimo o momento van; podrás afinar cada una después con «Cambiar».</p>
+      ${verI.map((x, k) => `<div class="prueba" style="opacity:${x.sel?1:.45}"><button class="btn sec" style="min-width:44px;padding:0 12px" data-a="impSel" data-v="${k}" aria-label="${x.sel?'Quitar':'Incluir'}">${x.sel?'✓':'○'}</button>
+        <div class="txt"><b>${esc(x.t)}</b><span class="peq">${esc(x.c)}</span></div></div>`).join('')}
+      ${I.items.length > 30 && !I.ver ? `<button class="btn sec" data-a="impVer">Ver las ${I.items.length}</button>` : ''}
+      <div class="chips" style="margin:6px 0"><button class="chip" data-a="impTodas" data-v="1">Marcar todas</button><button class="chip" data-a="impTodas" data-v="0">Desmarcar todas</button></div>
+      <p class="peq" style="margin:4px 0">¿Para qué ánimo o momento?</p>${chipsV(I.v, 'impV')}
+      <button class="btn" data-a="impAdd">Añadir ${n} a Mi cancionero</button>` : ''}
+      <button class="btn sec" data-a="impNo">Cancelar</button>`;
+  }
+  s += sec(`Mi cancionero · ${C.length}`, `<p class="peq">Tus propias piezas: elige a qué ánimo o momento corresponde cada una, y aparecerán en la música del día (si son muchas, rotan: tres a la vez).</p>
+    ${C.length ? verC.map(x => `<div class="prueba"><a class="btn sec" style="min-width:44px;padding:0 12px" href="${urlPieza(x.t, x.c)}" target="_blank" rel="noopener">▶</a>
+      <div class="txt"><b>${esc(x.t)}</b><span class="peq">${esc(x.c)}</span><br><span class="peq">${(x.v||[]).map(nomV).map(esc).join(' · ') || 'sin vínculo'}</span> <a href="#" class="peq" data-a="editPropia" data-v="${esc(x.id)}">${TMP.editPropia===x.id?'Hecho':'Cambiar'}</a>
+      ${TMP.editPropia===x.id ? chipsV(x.v||[], 'pvV', ` data-id="${esc(x.id)}"`) : ''}</div>
       <button class="btn sec" data-a="borrarPropia" data-v="${esc(x.id)}" aria-label="Quitar">${TMP.borrarPropia===x.id?'¿Quitar?':'✕'}</button></div>`).join('') : '<p>Aún no has añadido piezas.</p>'}
+    ${C.length > 25 && !TMP.verCan ? `<button class="btn sec" data-a="verCan">Ver las ${C.length}</button>` : ''}
     <h3 style="margin-top:12px">Añadir una pieza</h3>
     <label class="campo"><span>Título</span><input type="text" id="npT" maxlength="80" value="${esc(nuevo.t)}"></label>
     <label class="campo"><span>Autor o intérprete</span><input type="text" id="npC" maxlength="60" value="${esc(nuevo.c)}"></label>
     <p class="peq" style="margin:4px 0">¿Para qué ánimo o momento?</p>
-    <div class="chips">${VINCULOS.map(([k, n]) => `<button class="chip ${nuevo.v.includes(k)?'on':''}" data-a="npV" data-v="${k}">${esc(n)}</button>`).join('')}</div>
-    <button class="btn" data-a="npAdd">Añadir a Mi cancionero</button>`, true);
+    ${chipsV(nuevo.v, 'npV')}
+    <button class="btn" data-a="npAdd">Añadir a Mi cancionero</button>
+    <h3 style="margin-top:14px" id="impH">Importar una lista</h3>${imp}`, true);
   // eje Excalibur
   s += sec('El eje: Excalibur', `<p class="peq"><i>Excalibur</i> (Boorman, 1981) cuenta el camino del Código: la investidura, la gloria de la Orden, el pecado que hiere al rey y arruina la tierra, la búsqueda del Grial, la redención y la muerte del rey. Su música marca los grandes momentos de la app.</p>
     ${EJE_EXCALIBUR.map(([m, id, d]) => filaPieza(id, m)).join('')}`);

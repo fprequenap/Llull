@@ -191,6 +191,7 @@ El espíritu de la Orden de Caballería en todas las épocas. Solo entra lo que 
 - **Música del día** (Hoy, plegada): una pieza por ánimo, siete por ánimo en rotación semanal mezclando épocas; otra por la circunstancia; la del tiempo litúrgico y la del santo caballero; Laudes por la mañana y, por la noche, Completas con la antífona mariana del tiempo. Y las del contexto: vela, investidura, ascenso, caída o penitencia.
 - **En las ceremonias y el día:** música para la vela y la investidura, para el examen de la noche y para el ejercicio y la marcha.
 - **Mi cancionero:** cada caballero añade sus piezas y elige a qué ánimo o momento corresponde cada una; aparecen en la música del día. Empieza con «Exploradores», de Loquillo.
+- **Importar una lista:** desde Spotify, se exporta la lista con [Exportify](https://exportify.net) (archivo CSV) y se elige en Mi cancionero › Importar una lista; desde Apple Music (Mac: Archivo › Biblioteca › Exportar lista, texto, en UTF-16, que la app lee) o desde YouTube Music y el iPhone, con [TuneMyMusic](https://www.tunemymusic.com) (destino «Archivo»); también se puede pegar una lista, una canción por línea («Título — Autor»). Antes de guardar se quitan las que no encajen y se elige su ánimo o momento; las repetidas se omiten. Cada pieza puede cambiarse luego con «Cambiar». Si hay muchas para un mismo ánimo, rotan cada día, tres a la vez.
 
 ## Meditación
 
