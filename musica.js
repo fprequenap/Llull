@@ -172,9 +172,12 @@ function filaPieza(id, motivo){
   return `<div class="prueba"><a class="btn sec" style="min-width:44px;padding:0 12px" href="${urlPieza(p[0], p[1])}" target="_blank" rel="noopener" aria-label="Escuchar ${esc(p[0])}">▶</a>
     <div class="txt"><b>${esc(p[0])}</b><span class="peq">${esc(p[1])} · <span class="tag">${EPOCAS[p[2]]}</span>${motivo ? ` · ${esc(motivo)}` : ''}</span><br><span>${esc(p[3])}</span>${p[4] ? ` <span class="ref">${esc(p[4])}</span>` : ''}</div></div>`;
 }
+/* una entrada propia con enlace (p. ej. la lista entera de Spotify) abre ese enlace; si no, la búsqueda */
+function urlPropia(x){ return x.u && /^https:\/\//.test(x.u) ? x.u : urlPieza(x.t, x.c); }
+function enlaceLimpio(u){ u = (u || '').trim(); const m = u.match(/https:\/\/\S+/); return m ? m[0] : ''; }
 function filaPropia(x, motivo){
-  return `<div class="prueba"><a class="btn sec" style="min-width:44px;padding:0 12px" href="${urlPieza(x.t, x.c)}" target="_blank" rel="noopener" aria-label="Escuchar ${esc(x.t)}">▶</a>
-    <div class="txt"><b>${esc(x.t)}</b><span class="peq">${esc(x.c)} · <span class="tag v">Mi cancionero</span>${motivo ? ` · ${esc(motivo)}` : ''}</span></div></div>`;
+  return `<div class="prueba"><a class="btn sec" style="min-width:44px;padding:0 12px" href="${urlPropia(x)}" target="_blank" rel="noopener" aria-label="Escuchar ${esc(x.t)}">▶</a>
+    <div class="txt"><b>${esc(x.t)}</b><span class="peq">${x.c ? esc(x.c) + ' · ' : ''}<span class="tag v">${x.u ? 'Mi lista' : 'Mi cancionero'}</span>${motivo ? ` · ${esc(motivo)}` : ''}</span></div></div>`;
 }
 function lista(ids, motivo){ return ids.map(id => filaPieza(id, motivo)).join(''); }
 /* las propias que corresponden; si son muchas, rotan cada día (máx. 3 a la vez) */
@@ -284,7 +287,7 @@ function tarjetaMusica(h, dia){
 /* ---------- pantalla Música (Más) ---------- */
 function vistaMusica(){
   const plat = (S.ajustes && S.ajustes.plataforma) || 'spotify';
-  const nuevo = TMP.nuevaPieza || { t:'', c:'', v:[] };
+  const nuevo = TMP.nuevaPieza || { t:'', c:'', u:'', v:[] };
   const sec = (t, html, abierto) => `<details class="card plegable"${abierto ? ' open' : ''}><summary>${t}</summary><div style="margin-top:6px">${html}</div></details>`;
   let s = `<h1>Música</h1>
     <div class="card roja"><p>El espíritu de la Orden de Caballería en todas las épocas: del gregoriano y las <i>Cantigas</i> a Wagner, el cine y lo que tú añadas. Solo entra lo que encarna el Código: una virtud, un oficio o un momento del camino del caballero.</p>
@@ -314,14 +317,16 @@ function vistaMusica(){
       <button class="btn sec" data-a="impNo">Cancelar</button>`;
   }
   s += sec(`Mi cancionero · ${C.length}`, `<p class="peq">Tus propias piezas: elige a qué ánimo o momento corresponde cada una, y aparecerán en la música del día (si son muchas, rotan: tres a la vez).</p>
-    ${C.length ? verC.map(x => `<div class="prueba"><a class="btn sec" style="min-width:44px;padding:0 12px" href="${urlPieza(x.t, x.c)}" target="_blank" rel="noopener">▶</a>
-      <div class="txt"><b>${esc(x.t)}</b><span class="peq">${esc(x.c)}</span><br><span class="peq">${(x.v||[]).map(nomV).map(esc).join(' · ') || 'sin vínculo'}</span> <a href="#" class="peq" data-a="editPropia" data-v="${esc(x.id)}">${TMP.editPropia===x.id?'Hecho':'Cambiar'}</a>
+    ${C.length ? verC.map(x => `<div class="prueba"><a class="btn sec" style="min-width:44px;padding:0 12px" href="${urlPropia(x)}" target="_blank" rel="noopener">▶</a>
+      <div class="txt"><b>${esc(x.t)}</b><span class="peq">${x.u ? '<span class="tag v">lista completa</span> ' : ''}${esc(x.c)}</span><br><span class="peq">${(x.v||[]).map(nomV).map(esc).join(' · ') || 'sin vínculo'}</span> <a href="#" class="peq" data-a="editPropia" data-v="${esc(x.id)}">${TMP.editPropia===x.id?'Hecho':'Cambiar'}</a>
       ${TMP.editPropia===x.id ? chipsV(x.v||[], 'pvV', ` data-id="${esc(x.id)}"`) : ''}</div>
       <button class="btn sec" data-a="borrarPropia" data-v="${esc(x.id)}" aria-label="Quitar">${TMP.borrarPropia===x.id?'¿Quitar?':'✕'}</button></div>`).join('') : '<p>Aún no has añadido piezas.</p>'}
     ${C.length > 25 && !TMP.verCan ? `<button class="btn sec" data-a="verCan">Ver las ${C.length}</button>` : ''}
     <h3 style="margin-top:12px">Añadir una pieza</h3>
     <label class="campo"><span>Título</span><input type="text" id="npT" maxlength="80" value="${esc(nuevo.t)}"></label>
     <label class="campo"><span>Autor o intérprete</span><input type="text" id="npC" maxlength="60" value="${esc(nuevo.c)}"></label>
+    <label class="campo"><span>Enlace de una lista (opcional)</span><input type="text" id="npU" maxlength="300" inputmode="url" placeholder="https://open.spotify.com/playlist/…" value="${esc(nuevo.u || '')}"></label>
+    <p class="peq" style="margin:2px 0 6px">Para abrir una lista entera: en Spotify, en la lista, «Compartir › Copiar enlace», y pégalo aquí. Pon como título, por ejemplo, «Mi lista del camino».</p>
     <p class="peq" style="margin:4px 0">¿Para qué ánimo o momento?</p>
     ${chipsV(nuevo.v, 'npV')}
     <button class="btn" data-a="npAdd">Añadir a Mi cancionero</button>

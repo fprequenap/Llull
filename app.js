@@ -980,13 +980,14 @@ const ACC = {
   verGuia: () => abrirGuia(0),
   irMeditacion: () => { cerrarModal(); cerrarCita(); go('mas', 'meditacion'); },
   plataforma: el => { S.ajustes.plataforma = el.dataset.v; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); },
-  npV: el => { const N = TMP.nuevaPieza = TMP.nuevaPieza || { t:'', c:'', v:[] }; N.t = ($('#npT')||{}).value || N.t; N.c = ($('#npC')||{}).value || N.c; const v = el.dataset.v; N.v = N.v.includes(v) ? N.v.filter(x => x !== v) : [...N.v, v]; const y = window.scrollY; render(); window.scrollTo(0, y); },
+  npV: el => { const N = TMP.nuevaPieza = TMP.nuevaPieza || { t:'', c:'', u:'', v:[] }; N.t = ($('#npT')||{}).value || N.t; N.c = ($('#npC')||{}).value || N.c; N.u = ($('#npU')||{}).value || N.u; const v = el.dataset.v; N.v = N.v.includes(v) ? N.v.filter(x => x !== v) : [...N.v, v]; const y = window.scrollY; render(); window.scrollTo(0, y); },
   npAdd: () => {
-    const N = TMP.nuevaPieza || { v:[] }, t = ($('#npT').value || '').trim(), c = ($('#npC').value || '').trim();
+    const N = TMP.nuevaPieza || { v:[] }, t = ($('#npT').value || '').trim(), c = ($('#npC').value || '').trim(), uTxt = ($('#npU') || {}).value || '', u = enlaceLimpio(uTxt);
+    if (uTxt.trim() && !u) return toast('El enlace debe empezar por https://');
     if (!t) return toast('Escribe el título de la pieza.');
     if (!N.v || !N.v.length) return toast('Elige al menos un ánimo o momento.');
     S.cancionero = S.cancionero || [];
-    S.cancionero.push({ id:'c' + Date.now().toString(36), t, c, v:[...N.v] });
+    S.cancionero.push(Object.assign({ id:'c' + Date.now().toString(36), t, c, v:[...N.v] }, u ? { u } : {}));
     TMP.nuevaPieza = null; guardar(); const y = window.scrollY; render(); window.scrollTo(0, y); toast('Añadida a Mi cancionero.');
   },
   impPegar: () => { const t = ($('#impTxt') || {}).value || ''; if (!t.trim()) return toast('Pega primero la lista.'); prepararImport(t); const y = window.scrollY; render(); window.scrollTo(0, y); },
@@ -1216,7 +1217,7 @@ asegurarPersistencia();
 avisoCopiaAlAbrir();
 if (!S.guiaVista) setTimeout(() => { if (!document.getElementById('modal')) abrirGuia(0); }, S.perfil ? 2700 : 400);
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=19').then(r => { r.update(); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js?v=20').then(r => { r.update(); }).catch(()=>{});
   // solo se recarga al actualizar una versión ya instalada, no en la primera visita
   const habia = !!navigator.serviceWorker.controller;
   let recargado = false;
